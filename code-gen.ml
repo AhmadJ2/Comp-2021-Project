@@ -32,7 +32,7 @@ module type CODE_GEN = sig
 end;;
 
 module Code_Gen : CODE_GEN = struct
-  let make_consts_tbl asts = raise X_not_yet_implemented;;
+  let make_consts_tbl asts = remove_duplicates(List.map consts_tbl_helper asts);;
   let make_fvars_tbl asts = raise X_not_yet_implemented;;
   let generate consts fvars e = raise X_not_yet_implemented;;
 end;;
