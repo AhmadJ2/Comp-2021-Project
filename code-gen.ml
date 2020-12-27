@@ -82,9 +82,9 @@ let g = raise X_not_yet_implemented;;
 
 
 module Code_Gen : CODE_GEN = struct
-
   let make_consts_tbl asts = List.fold_left mct [] asts;;
   let make_fvars_tbl asts = List.fold_left mft [] asts;;
+
   let generate consts fvars e = raise X_not_yet_implemented;;
 end;;
 
