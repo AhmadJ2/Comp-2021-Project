@@ -143,10 +143,16 @@ module Prims : PRIMS = struct
              " ^ rat_body ^ "
           .op_return:")) in      
     let arith_map = [
-        "MAKE_RATIONAL(rax, rdx, rdi)
+
+        (* todo: add the 'add' operator *)
+
+        (* todo: make it multi not binary ops *)
+        "MAKE_RATIONAL(rax, rdx, rdi) 
          mov PVAR(1), rax
          pop rbp
-         jmp mul", "divsd", "div";
+         jmp mul", (* rat_op *)
+          "divsd", (* flt_op *)
+           "div"; (* name *)
         
         "imul rsi, rdi
 	 imul rcx, rdx", "mulsd", "mul";
@@ -173,7 +179,7 @@ module Prims : PRIMS = struct
           MAKE_RATIONAL(rax, rsi, rcx)") in
     let comp_map = [
         (* = *)
-        return_boolean_eq,
+        return_boolean_eq, (* comp_wrapper *)
         "NUMERATOR rcx, rsi
 	 NUMERATOR rdx, rdi
 	 cmp rcx, rdx
@@ -181,11 +187,13 @@ module Prims : PRIMS = struct
 	 DENOMINATOR rcx, rsi
 	 DENOMINATOR rdx, rdi
 	 cmp rcx, rdx
-         .false:",
+         .false:", (* rat_body *)
         "FLOAT_VAL rsi, rsi
 	 FLOAT_VAL rdi, rdi
-	 cmp rsi, rdi", "eq";
+   cmp rsi, rdi", (* flt_body *)
+    "eq"; (* name *)
 
+        (* todo: maybe to add > op *)
         (* < *)
         return_boolean "jl",
         "DENOMINATOR rcx, rsi
@@ -313,3 +321,5 @@ module Prims : PRIMS = struct
      string of primitive procedures. *)
   let procs = String.concat "\n\n" [type_queries ; numeric_ops; misc_ops];;
 end;;
+
+(* todo: check the eq? if it is implemented *)

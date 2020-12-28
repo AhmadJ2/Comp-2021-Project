@@ -40,8 +40,8 @@ let make_prologue consts_tbl fvars_tbl =
     (* This implementation assumes fvars are addressed by an offset from the label `fvar_tbl`.
        If you use a different addressing scheme (e.g., a label for each fvar), change the 
        addressing here to match. *)
-    "MAKE_CLOSURE(rax, SOB_NIL_ADDRESS, " ^ label  ^ ")\n" ^
-      "mov [fvar_tbl+" ^  (string_of_int (List.assoc prim fvars_tbl)) ^ "], rax" in
+    "MAKE_CLOSURE(rax, SOB_NIL_ADDRESS, " ^ label  ^ ")\n" ^  (* why all primite scheme methods has a SOB_NIL_ADDRESS as their env pointer *)
+      "mov [fvar_tbl+" ^  (string_of_int (List.assoc prim fvars_tbl)) ^ "], rax" in (* Exception: Not_found. -> maybe we need to refactor the fvar table a little bit*)
   let constant_bytes (c, (a, s)) =
     (* Adapt the deconstruction here to your constants data generation scheme.
        This implementation assumes the bytes representing the constants are pre-computed in
@@ -137,10 +137,8 @@ try
   let asts = string_to_asts code in
 
   (* generate the constants table *)
-  (* todo: implement*)
   let consts_tbl = Code_Gen.make_consts_tbl asts in
 
-  (* todo: implement*)
   (* generate the fvars table *)
   let fvars_tbl = Code_Gen.make_fvars_tbl asts in  
 
