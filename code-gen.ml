@@ -76,9 +76,6 @@ let rec mft acc exp =
     | ApplicTP' (op, ap) -> List.fold_left mft (mft acc op) ap
     | _ -> acc;;
 
-let g = raise X_not_yet_implemented;;
-
-
 
 
 module Code_Gen : CODE_GEN = struct
