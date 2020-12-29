@@ -142,7 +142,6 @@ try
   (* generate the fvars table *)
   let fvars_tbl = Code_Gen.make_fvars_tbl asts in  
 
-  (* todo: implement*)
   (* Generate assembly code for each ast and merge them all into a single string *)
   let generate = Code_Gen.generate consts_tbl fvars_tbl in 
   let code_fragment = String.concat "\n\n"
@@ -150,7 +149,6 @@ try
                            (fun ast -> (generate ast) ^ "\n\tcall write_sob_if_not_void")
                            asts) in
 
-  (* todo: understand this shit *)                         
   (* merge everything into a single large string and print it out *)
   print_string ((make_prologue consts_tbl fvars_tbl)  ^ 
                   code_fragment ^ clean_exit ^

@@ -144,8 +144,6 @@ module Prims : PRIMS = struct
           .op_return:")) in      
     let arith_map = [
 
-        (* todo: add the 'add' operator *)
-
         (* todo: make it multi not binary ops *)
         "MAKE_RATIONAL(rax, rdx, rdi) 
          mov PVAR(1), rax
@@ -155,12 +153,16 @@ module Prims : PRIMS = struct
            "div"; (* name *)
         
         "imul rsi, rdi
-	 imul rcx, rdx", "mulsd", "mul";
+        imul rcx, rdx", 
+        "mulsd",
+          "mul";
         
         "imul rsi, rdx
-	 imul rdi, rcx
-	 add rsi, rdi
-	 imul rcx, rdx", "addsd", "add";
+        imul rdi, rcx
+        add rsi, rdi
+        imul rcx, rdx", 
+        "addsd", 
+        "add";
       ] in
     let arith name flt_op rat_op =
       numeric_op name
