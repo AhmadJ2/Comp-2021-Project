@@ -65,9 +65,12 @@ let make_prologue consts_tbl fvars_tbl =
       ^ "\n\t mov " ^ "[const_tbl +8*" ^  (string_of_int a) ^ "], rax\n\tSTRING_ELEMENTS rax, rax\n\t" ^
       (String.concat ("")(stringify (string_to_list e) (String.length e) []))
     
-      | Sexpr(Bool(b)) -> if (b) then 
+    | Sexpr(Bool(b)) -> if (b) then 
     ("MAKE_BOOL_VALUE  rax, 1 \n\tmov [(const_tbl + 8*"^  (string_of_int a) ^")], rax ") else 
     ("MAKE_BOOL_VALUE  rax, 0 \n\tmov [(const_tbl + 8*"^  (string_of_int a) ^")], rax ")
+
+    | Sexpr(Nil) ->
+
     | _ -> "" 
   in
 ";;; All the macros and the scheme-object printing procedure
@@ -93,8 +96,8 @@ const_tbl:
 ;;; definitions in the epilogue to work properly
 %define SOB_VOID_ADDRESS const_tbl+8*" ^ (string_of_int (fst (List.assoc Void consts_tbl))) ^ "
 %define SOB_NIL_ADDRESS const_tbl+8*" ^ (string_of_int (fst (List.assoc (Sexpr Nil) consts_tbl))) ^ "
-%define SOB_FALSE_ADDRESS [const_tbl+8*" ^ (string_of_int (fst (List.assoc (Sexpr (Bool false)) consts_tbl))) ^ "]
-%define SOB_TRUE_ADDRESS [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (Sexpr (Bool true)) consts_tbl))) ^ "]
+%define SOB_FALSE_ADDRESS const_tbl+8*" ^ (string_of_int (fst (List.assoc (Sexpr (Bool false)) consts_tbl))) ^ "
+%define SOB_TRUE_ADDRESS const_tbl+8*" ^ (string_of_int  (fst (List.assoc (Sexpr (Bool true)) consts_tbl))) ^ "
 
 global main
 section .text

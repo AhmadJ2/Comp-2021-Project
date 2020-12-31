@@ -83,7 +83,7 @@ let rec mft acc exp =
 let wrap_const cnst const = match cnst with
     | Void -> "mov rax, SOB_VOID_ADDRESS"
     | Sexpr(Nil) -> "mov rax, SOB_NIL_ADDRESS"
-    | Sexpr(Bool(e)) -> if (e) then ("mov rax, SOB_TRUE_ADDRESS") else ("mov rax, SOB_FALSE_ADDRESS")
+    | Sexpr(Bool(e)) -> if (e) then ("mov rax, [SOB_TRUE_ADDRESS]") else ("mov rax, [SOB_FALSE_ADDRESS]")
     | Sexpr(Char(c)) -> "mov rax, [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"]"
     | Sexpr(String(c)) -> "mov rax, [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"]"
     | _ -> raise X_not_yet_implemented;;
