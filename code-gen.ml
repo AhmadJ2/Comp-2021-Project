@@ -1,6 +1,7 @@
 #use "semantic-analyser.ml";;
 open Semantics;;
 exception X_WRONG_TYPE
+exception X_not_implemented_codeGen
 (* This module is here for you convenience only!
    You are not required to use it.
    you are allowed to change it. *)
@@ -51,7 +52,7 @@ let find_off lst =
   
 let rec mct acc exp = 
     match exp with 
-    | Const'(Void) -> if (false = List.exists (fun (con, (inte, str)) -> str = "T_VOID") acc) then (acc@[(Void,((find_off acc), "db T_VOID"))]) else (acc)
+    | Const'(Void) -> if (false = List.exists (fun (con, (inte, str)) -> str = "db T_VOID") acc) then (acc@[(Void,((find_off acc), "db T_VOID"))]) else (acc)
     | Const'(Sexpr(e))->
         (match e with
         | String(name)-> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(String(name)))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_STRING \""^name^"\", " ^string_of_int (String.length name)))]) else (acc)
@@ -122,10 +123,18 @@ let wrap_const cnst const = match cnst with
     | Sexpr(Pair(car, cdr)) -> "mov rax, const_tbl+" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^""
     | Sexpr(Symbol(s))-> "mov rax, const_tbl+" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^""
 
+  let counter = ref 0;;
 
-let g consts fvars e = match e with
+let rec g consts fvars e = match e with
     | Const'(c) -> wrap_const c consts
-    | _ -> raise X_not_yet_implemented;;
+    | If'(tst, thn, els) -> 
+
+    ( let c = !counter in
+      let _ = (counter:=!counter+1) in
+    
+    (Printf.sprintf "%s\n\tcmp byte[rax+1], 1\n\tje true%d\n\t%s\n\tjmp continue%d\n\ttrue%d:\n\t%s\n\tcontinue%d:"
+      (g consts fvars tst) c  (g consts fvars els) c c (g consts fvars thn) c))
+    | _ -> raise X_not_implemented_codeGen;;
 
 
 
