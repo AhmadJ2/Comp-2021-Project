@@ -264,7 +264,7 @@ div:
 	  DENOMINATOR rdx, rdi
 	  NUMERATOR rsi, rsi
 	  NUMERATOR rdi, rdi
-          MAKE_RATIONAL(rax, rdx, rdi)
+          MAKE_RATIONAL(rax, rdx, rdi) 
          mov PVAR(1), rax
          pop rbp
          jmp mul
@@ -295,7 +295,7 @@ mul:
 	  NUMERATOR rsi, rsi
 	  NUMERATOR rdi, rdi
           imul rsi, rdi
-	 imul rcx, rdx
+        imul rcx, rdx
           MAKE_RATIONAL(rax, rsi, rcx)
           .op_return:
          pop rbp
@@ -323,9 +323,9 @@ add:
 	  NUMERATOR rsi, rsi
 	  NUMERATOR rdi, rdi
           imul rsi, rdx
-	 imul rdi, rcx
-	 add rsi, rdi
-	 imul rcx, rdx
+        imul rdi, rcx
+        add rsi, rdi
+        imul rcx, rdx
           MAKE_RATIONAL(rax, rsi, rcx)
           .op_return:
          pop rbp
@@ -341,7 +341,7 @@ eq:
 	     jne .eq_rat
              FLOAT_VAL rsi, rsi
 	 FLOAT_VAL rdi, rdi
-	 cmp rsi, rdi
+   cmp rsi, rdi
              jmp .op_return
           .eq_rat:
              NUMERATOR rcx, rsi
