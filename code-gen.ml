@@ -44,7 +44,17 @@ let rec mct acc exp =
         | Number(Fraction(num, den)) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Number(Fraction(num, den))))) acc) then (acc@[(Sexpr(e),(List.length acc, "T_RATIONAL"))]) else (acc)
         | Number(Float(flo)) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Number(Float(flo))))) acc) then (acc@[(Sexpr(e),(List.length acc, "T_FLOAT"))]) else (acc)
         | Nil -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Nil))) acc) then (acc@[(Sexpr(e),(List.length acc, "T_NIL"))]) else (acc)
-        | _ -> acc)
+        | Pair(car, cdr) -> let dis = (mct (mct acc (Const'(Sexpr(car)))) (Const'(Sexpr(cdr)))) in 
+          (if (false = (List.exists (fun (con, (inte, str)) -> (con = (Sexpr(Pair(car, cdr))))) (dis))) then 
+          (
+              (dis)@[(Sexpr(e),(List.length (dis), 
+              "mov rbx, [const_tbl +8*"^let (a, (b, c)) = (List.find (fun (x, (y, z)) -> x = Sexpr(car))  dis) in (string_of_int (b))^"]\n"^
+              "mov rcx, [const_tbl +8*"^let (a, (b, c)) = (List.find (fun (x, (y, z)) -> x = Sexpr(cdr))  dis) in (string_of_int (b))^"]\n\t"^
+              "MAKE_PAIR (rax, rbx, rcx)\n\t"))]
+            ) (*Make pair will take the offset of car and cdr*)
+          else (dis))
+        | Symbol(s) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(String(s)))) acc) then (acc@[(Sexpr(e),(List.length acc, "MAKE_SYMBOL"))]) else (acc))
+
     | If'(tst, thn, alt) -> mct (mct (mct acc tst) thn) alt
     | Seq'(seq) -> List.fold_left mct acc seq
     | Or'(lst) -> List.fold_left mct acc lst
@@ -79,11 +89,14 @@ let rec mft acc exp =
 
 
 let wrap_const cnst const = match cnst with
-    | Void -> "mov rax, SOB_VOID_ADDRESS"
-    | Sexpr(Nil) -> "mov rax, SOB_NIL_ADDRESS"
-    | Sexpr(Bool(e)) -> if (e) then ("mov rax, SOB_TRUE_ADDRESS") else ("mov rax, SOB_FALSE_ADDRESS")
+    | Void -> "mov rax, [SOB_VOID_ADDRESS]"
+    | Sexpr(Nil) -> "mov rax, [SOB_NIL_ADDRESS]"
+    | Sexpr(Bool(e)) -> if (e) then ("mov rax, [SOB_TRUE_ADDRESS]") else ("mov rax, [SOB_FALSE_ADDRESS]")
     | Sexpr(Char(c)) -> "mov rax, [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"]"
     | Sexpr(String(c)) -> "mov rax, [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"]"
+    | Sexpr(Number(Float(c))) -> "mov rax, [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"]"
+    | Sexpr(Number(Fraction(num, den))) -> "mov rax, [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"]"
+    | Sexpr(Pair(car, cdr)) -> "mov rax, [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"]"
     | _ -> raise X_not_yet_implemented;;
 
 
@@ -101,4 +114,22 @@ module Code_Gen : CODE_GEN = struct
 
   let generate consts fvars e = g consts fvars e;;
 end;;
+
+
+
+[
+(Sexpr Nil, (0, "T_NIL"));
+
+(Sexpr (Pair (Nil, Nil)),
+  (1, "mov rcx, [const_tbl +8*0]\n\tMAKE_PAIR (rax, rbx, rcx)\n\t"));
+
+(Sexpr (Pair (Symbol "quote", Pair (Nil, Nil))),
+  (2, "mov rcx, [const_tbl +8*1]\n\tMAKE_PAIR (rax, rbx, rcx)\n\t"));
+
+(Sexpr (Pair (Pair (Symbol "quote", Pair (Nil, Nil)), Nil)),
+  (3, "mov rcx, [const_tbl +8*0]\n\tMAKE_PAIR (rax, rbx, rcx)\n\t"));
+
+(Void, (4, "T_VOID"));
+(Sexpr (Bool false), (5, "T_BOOL"));
+(Sexpr (Bool true), (6, "T_BOOL"))]
 
