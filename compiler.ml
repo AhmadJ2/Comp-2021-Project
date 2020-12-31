@@ -41,14 +41,14 @@ let make_prologue consts_tbl fvars_tbl =
     (* you can add yours here *)
     
   ] in
-  let tmp  =[] in
+  let tmp = [] in
   let make_primitive_closure (prim, label) =
     (* This implementation assumes fvars are addressed by an offset from the label `fvar_tbl`.
        If you use a different addressing scheme (e.g., a label for each fvar), change the 
        addressing here to match. *)
     "MAKE_CLOSURE(rax, SOB_NIL_ADDRESS, " ^ label  ^ ")\n" ^
       "mov [fvar_tbl+" ^  
-      (* (string_of_int (List.assoc prim fvars_tbl)) *) "a"
+      (string_of_int (List.assoc prim fvars_tbl))
        ^ "], rax" in
 
   let constant_bytes (c, (a, s)) =
@@ -147,7 +147,7 @@ try
   (* load the input file and stdlib *)
   let code =  
     (* (file_to_string "stdlib.scm") ^  *)
-    (file_to_string infile) in
+    (file_to_string infile ) in
 
   (* generate asts for all the code *)
   let asts = string_to_asts code in
@@ -175,3 +175,5 @@ try
 
 (* raise an exception if the input file isn't found *)
 with Invalid_argument(x) -> raise X_missing_input_file;;
+
+

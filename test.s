@@ -18,15 +18,9 @@ db T_VOID
 db T_NIL
 MAKE_SINGLE_LIT T_BOOL ,0
 MAKE_SINGLE_LIT T_BOOL ,1
-MAKE_LITERAL_STRING "a", 1
-MAKE_LITERAL_SYMBOL const_tbl+6
-MAKE_LITERAL_SYMBOL 6
-MAKE_LITERAL_STRING "quote", 5
-MAKE_LITERAL_SYMBOL const_tbl+35
-MAKE_LITERAL_PAIR(const_tbl +1, const_tbl +1)
-MAKE_LITERAL_PAIR(const_tbl +50, const_tbl +59)
-MAKE_LITERAL_SYMBOL 35
-MAKE_LITERAL_PAIR(const_tbl +76, const_tbl +1)
+MAKE_LITERAL_RATIONAL(34564564564561345, 1)
+MAKE_LITERAL_RATIONAL(123, 1)
+MAKE_LITERAL_RATIONAL(2, 1)
 
 
 ;;; These macro definitions are required for the primitive
@@ -67,16 +61,21 @@ user_code_fragment:
 ;;; The code you compiled will be added here.
 ;;; It will be executed immediately after the closures for 
 ;;; the primitive procedures are set up.
-mov rax, const_tbl+17
-	call write_sob_if_not_void
-
-mov rax, const_tbl+17
-	call write_sob_if_not_void
-
-mov rax, const_tbl+76
-	call write_sob_if_not_void
-
-mov rax, const_tbl+102
+mov rax, SOB_FALSE_ADDRESS
+	cmp byte[rax+1], 1
+	je true0
+	mov rax, SOB_FALSE_ADDRESS
+	cmp byte[rax+1], 1
+	je true1
+	mov rax, const_tbl+40
+	jmp continue1
+	true1:
+	mov rax, const_tbl+23
+	continue1:
+	jmp continue0
+	true0:
+	mov rax, const_tbl+6
+	continue0:
 	call write_sob_if_not_void;;; Clean up the dummy frame, set the exit status to 0 ("success"), 
    ;;; and return from main
    pop rbp
