@@ -167,11 +167,23 @@
 %endmacro
 
 %macro MAKE_SYMBOL 2
-	
+
 %endmacro
 
-%endmacro 
+%macro MAKE_SINGLE_LIT 2
+	db %1
+		db %2
+%endmacro
 
+%macro MAKE_LITERAL_SYMBOL 1
+	db T_SYMBOL
+		dq %1
+%endmacro
+
+%macro MAKE_LITERAL_FLOAT 1
+	db T_FLOAT
+		dq %1
+%endmacro
 %macro MAKE_WORDS_LIT 3
 	db %1
         dq %2
@@ -183,7 +195,11 @@
 
 %define MAKE_LITERAL_RATIONAL(num, den) \
 	MAKE_WORDS_LIT T_RATIONAL, num, den
-	
+%macro MAKE_LITERAL_STRING 2
+	db T_STRING
+	dq %2
+	db %1, 0
+%endmacro
 %define MAKE_PAIR(r, car, cdr) \
         MAKE_TWO_WORDS r, T_PAIR, car, cdr
 

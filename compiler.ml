@@ -52,38 +52,11 @@ let make_prologue consts_tbl fvars_tbl =
        ^ "], rax" in
 
   let constant_bytes (c, (a, s)) =
-    " dq " ^  (match c with
-                | Sexpr(Number(Float(f))) -> (string_of_float f)
-                | _ -> "0" )
+    s
     (* Adapt the deconstruction here to your constants data generation scheme.
        This implementation assumes the bytes representing the constants are pre-computed in
        the code-generator and stored in the last column of a three-column constants-table structure *)
      in
-  let const_imp (c, (a, s)) = 
-  match c with 
-    | Sexpr(Char(e)) ->
-    ("MAKE_CHAR_VALUE rax,'" ^ Printf.sprintf "%c" e ^ "'\n\t mov [const_tbl +8*" ^ (string_of_int a) ^"], rax" )
-    
-    | Sexpr(String(e)) -> ("MAKE_STRING rax, "^ (string_of_int (String.length e)) ^ "," ^ "\"" ^ "1" ^ "\" ")
-      ^ "\n\tmov " ^ "[const_tbl +8*" ^  (string_of_int a) ^ "], rax\n\tSTRING_ELEMENTS rax, rax\n\t" ^
-      (String.concat ("")(stringify (string_to_list e) (String.length e) []))
-    
-    | Sexpr(Bool(b)) -> if (b) then 
-    ("MAKE_BOOL_VALUE  rax, 1 \n\tmov [SOB_TRUE_ADDRESS], rax\n\t") else 
-    ("MAKE_BOOL_VALUE  rax, 0 \n\tmov [SOB_FALSE_ADDRESS], rax\n\t")
-
-    | Sexpr(Nil) -> "MAKE_NIL_VOID rax, T_NIL\n\tmov [SOB_NIL_ADDRESS], rax\n\t"
-
-    | Void ->   "MAKE_NIL_VOID rax, T_VOID\n\t"^
-                "mov [SOB_VOID_ADDRESS], rax\n\t"
-
-    | Sexpr(Number(Float(c))) ->  "MAKE_FLOAT_ [const_tbl +8*" ^ (string_of_int a) ^"]"
-
-    | Sexpr(Number(Fraction(num, den))) ->  "MAKE_RATIONAL_ "^(string_of_int num)^", "^(string_of_int den)^", [const_tbl +8*" ^ (string_of_int a) ^"]"
-
-    | Sexpr(Pair(car,cdr)) -> s ^"\n\tmov [const_tbl + 8* "^(string_of_int a)^" ], rax\n\t"
-    | _ -> "" 
-  in
 ";;; All the macros and the scheme-object printing procedure
 ;;; are defined in compiler.s
 %include \"compiler.s\"
@@ -105,10 +78,10 @@ const_tbl:
 
 ;;; These macro definitions are required for the primitive
 ;;; definitions in the epilogue to work properly
-%define SOB_VOID_ADDRESS const_tbl+8*" ^ (string_of_int (fst (List.assoc Void consts_tbl))) ^ "
-%define SOB_NIL_ADDRESS const_tbl+8*" ^ (string_of_int (fst (List.assoc (Sexpr Nil) consts_tbl))) ^ "
-%define SOB_FALSE_ADDRESS const_tbl+8*" ^ (string_of_int (fst (List.assoc (Sexpr (Bool false)) consts_tbl))) ^ "
-%define SOB_TRUE_ADDRESS const_tbl+8*" ^ (string_of_int  (fst (List.assoc (Sexpr (Bool true)) consts_tbl))) ^ "
+%define SOB_VOID_ADDRESS const_tbl+" ^ (string_of_int (fst (List.assoc Void consts_tbl))) ^ "
+%define SOB_NIL_ADDRESS const_tbl+" ^ (string_of_int (fst (List.assoc (Sexpr Nil) consts_tbl))) ^ "
+%define SOB_FALSE_ADDRESS const_tbl+" ^ (string_of_int (fst (List.assoc (Sexpr (Bool false)) consts_tbl))) ^ "
+%define SOB_TRUE_ADDRESS const_tbl+" ^ (string_of_int  (fst (List.assoc (Sexpr (Bool true)) consts_tbl))) ^ "
 
 global main
 section .text
@@ -135,7 +108,6 @@ main:
     ;; This is where we simulate the missing (define ...) expressions
     ;; for all the primitive procedures.
 " 
-^(String.concat "\n" (List.map const_imp consts_tbl))
 ^ (String.concat "\n" (List.map make_primitive_closure tmp)) ^ "\n
 
 user_code_fragment:
