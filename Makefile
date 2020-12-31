@@ -1,7 +1,11 @@
 MKDIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 BASEDIR := $(PWD)
 
-.phony: %
+.phony: 
 
-%:
-	cd $(MKDIR) && ocaml compiler.ml $(BASEDIR)/$@.scm > $@.s && nasm -f elf64 -o $@.o $@.s && gcc -static -m64 -o $@ $@.o && mv $@ $(BASEDIR)
+all:
+
+	 ocaml compiler.ml $(BASEDIR)/file.scm > test.s && nasm -f elf64 -o test.o test.s && gcc -static -m64 -o test test.o #&& mv $@ $(BASEDIR)
+	 ./test
+ass:
+	nasm -f elf64 -o test.o test.s && gcc -static -m64 -o test test.o; ./test

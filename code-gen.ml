@@ -35,7 +35,7 @@ end;;
 
 let rec mct acc exp = 
     match exp with 
-    | Const'(Void) -> if (List.exists (fun (con, (inte, str)) -> str = "T_VOID") acc) then (acc@[(Void,(List.length acc, "T_VOID"))]) else (acc)
+    | Const'(Void) -> if (false = List.exists (fun (con, (inte, str)) -> str = "T_VOID") acc) then (acc@[(Void,(List.length acc, "T_VOID"))]) else (acc)
     | Const'(Sexpr(e))->
         (match e with
         | String(name)-> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(String(name)))) acc) then (acc@[(Sexpr(e),(List.length acc, "T_STRING"))]) else (acc)
@@ -76,15 +76,32 @@ let rec mft acc exp =
     | ApplicTP' (op, ap) -> List.fold_left mft (mft acc op) ap
     | _ -> acc;;
 
-let g = raise X_not_yet_implemented;;
+
+
+
+
+let wrap_const cnst const = match cnst with
+    | Void -> "mov rax, SOB_VOID_ADDRESS"
+    | Sexpr(Nil) -> "mov rax, SOB_NIL_ADDRESS"
+    | Sexpr(Bool(e)) -> if (e) then ("mov rax, SOB_TRUE_ADDRESS") else ("mov rax, SOB_FALSE_ADDRESS")
+    | Sexpr(Char(c)) -> "mov rax, [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"]"
+    | Sexpr(String(c)) -> "mov rax, [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"]"
+    | _ -> raise X_not_yet_implemented;;
+
+
+let g consts fvars e = match e with
+    | Const'(c) -> wrap_const c consts
+    | _ -> raise X_not_yet_implemented;;
 
 
 
 
 module Code_Gen : CODE_GEN = struct
-  let make_consts_tbl asts = List.fold_left mct [] asts;;
+  let make_consts_tbl asts = (List.fold_left mct [] (asts@[Const'(Void); Const'(Sexpr(Nil));Const'(Sexpr(Bool(false)));
+                  Const'(Sexpr(Bool(true)));]));;
   let make_fvars_tbl asts = List.fold_left mft [] asts;;
+  
 
-  let generate consts fvars e = raise X_not_yet_implemented;;
+  let generate consts fvars e = g consts fvars e;;
 end;;
 

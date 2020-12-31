@@ -16,7 +16,31 @@
 %define KB(n) n*1024
 %define MB(n) 1024*KB(n)
 %define GB(n) 1024*MB(n)
+; %1 is where to place the char
+; %2 what char to place
+%macro pops 1
+    mov rcx, %1
+    %%start:
+        pop rdx
+        dec rcx
+        cmp rcx, 0
+        jne %%start
+%endmacro
 
+%macro FORCE_STRING 2
+    mov rbx, %1
+    mov rcx, %2
+        %%loop:
+
+        mov dl , byte [rsp+8*rcx]
+        cmp rcx, 0
+        je %%end
+        mov byte [rbx], dl
+        add rbx, 1
+        sub rcx, 1
+        jmp %%loop
+        %%end:
+%endmacro
 
 %macro SKIP_TYPE_TAG 2
 	mov %1, qword [%2+TYPE_SIZE]	
@@ -70,6 +94,12 @@
 %macro MAKE_CHAR_VALUE 2
 	MALLOC %1, 1+TYPE_SIZE
 	mov byte [%1], T_CHAR
+	mov byte [%1+TYPE_SIZE], %2
+%endmacro
+
+%macro MAKE_BOOL_VALUE 2
+	MALLOC %1, 1+TYPE_SIZE
+	mov byte [%1], T_BOOL
 	mov byte [%1+TYPE_SIZE], %2
 %endmacro
 
@@ -138,7 +168,13 @@
 %define MAKE_CLOSURE(r, env, body) \
         MAKE_TWO_WORDS r, T_CLOSURE, env, body
 
-	
+%macro MAKE_STRING_LIT 2
+		jmp %%end
+		db T_STRING
+        dq %1
+		db %2
+		%%end
+%endmacro
 ;;; Macros and routines for printing Scheme OBjects to STDOUT
 %define CHAR_NUL 0
 %define CHAR_TAB 9
