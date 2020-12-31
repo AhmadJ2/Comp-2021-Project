@@ -14,7 +14,7 @@ let file_to_string f =
 let rec stringify st nm acc = 
   match st with
     | car::cdr -> stringify cdr nm (acc@(["push " ^ (string_of_int (int_of_char car))^ "\n\t"]))
-    | _ -> acc@["\n\tpush 0\n\t FORCE_STRING rax, " ^ (string_of_int nm) ^"\n\tpops "^(string_of_int (nm+1))]
+    | _ -> acc@["push 0\n\tFORCE_STRING rax, " ^ (string_of_int nm) ^"\n\tpops "^(string_of_int (nm+1))]
 
 (* This procedure creates the assembly code to set up the runtime environment for the compiled
    Scheme code. *)
@@ -41,36 +41,22 @@ let make_prologue consts_tbl fvars_tbl =
     (* you can add yours here *)
     
   ] in
-  let tmp  =[] in
+  let tmp = [] in
   let make_primitive_closure (prim, label) =
     (* This implementation assumes fvars are addressed by an offset from the label `fvar_tbl`.
        If you use a different addressing scheme (e.g., a label for each fvar), change the 
        addressing here to match. *)
     "MAKE_CLOSURE(rax, SOB_NIL_ADDRESS, " ^ label  ^ ")\n" ^
       "mov [fvar_tbl+" ^  
-      (* (string_of_int (List.assoc prim fvars_tbl)) *) "a"
+      (string_of_int (List.assoc prim fvars_tbl))
        ^ "], rax" in
 
   let constant_bytes (c, (a, s)) =
-    " dq 1"  
+    s
     (* Adapt the deconstruction here to your constants data generation scheme.
        This implementation assumes the bytes representing the constants are pre-computed in
        the code-generator and stored in the last column of a three-column constants-table structure *)
      in
-  let const_imp (c, (a, s)) = 
-  match c with 
-    | Sexpr(Char(e)) ->
-    ("MAKE_CHAR_VALUE rax,'" ^ Printf.sprintf "%c" e ^ "'\n\t mov [const_tbl +8*" ^ (string_of_int a) ^"], rax" )
-    
-    | Sexpr(String(e)) -> ("MAKE_STRING rax, "^ (string_of_int (String.length e)) ^ "," ^ "\"" ^ "1" ^ "\" ")
-      ^ "\n\t mov " ^ "[const_tbl +8*" ^  (string_of_int a) ^ "], rax\n\tSTRING_ELEMENTS rax, rax\n\t" ^
-      (String.concat ("")(stringify (string_to_list e) (String.length e) []))
-    
-      | Sexpr(Bool(b)) -> if (b) then 
-    ("MAKE_BOOL_VALUE  rax, 1 \n\tmov [(const_tbl + 8*"^  (string_of_int a) ^")], rax ") else 
-    ("MAKE_BOOL_VALUE  rax, 0 \n\tmov [(const_tbl + 8*"^  (string_of_int a) ^")], rax ")
-    | _ -> "" 
-  in
 ";;; All the macros and the scheme-object printing procedure
 ;;; are defined in compiler.s
 %include \"compiler.s\"
@@ -92,10 +78,10 @@ const_tbl:
 
 ;;; These macro definitions are required for the primitive
 ;;; definitions in the epilogue to work properly
-%define SOB_VOID_ADDRESS const_tbl+8*" ^ (string_of_int (fst (List.assoc Void consts_tbl))) ^ "
-%define SOB_NIL_ADDRESS const_tbl+8*" ^ (string_of_int (fst (List.assoc (Sexpr Nil) consts_tbl))) ^ "
-%define SOB_FALSE_ADDRESS [const_tbl+8*" ^ (string_of_int (fst (List.assoc (Sexpr (Bool false)) consts_tbl))) ^ "]
-%define SOB_TRUE_ADDRESS [const_tbl+8*" ^ (string_of_int  (fst (List.assoc (Sexpr (Bool true)) consts_tbl))) ^ "]
+%define SOB_VOID_ADDRESS const_tbl+" ^ (string_of_int (fst (List.assoc Void consts_tbl))) ^ "
+%define SOB_NIL_ADDRESS const_tbl+" ^ (string_of_int (fst (List.assoc (Sexpr Nil) consts_tbl))) ^ "
+%define SOB_FALSE_ADDRESS const_tbl+" ^ (string_of_int (fst (List.assoc (Sexpr (Bool false)) consts_tbl))) ^ "
+%define SOB_TRUE_ADDRESS const_tbl+" ^ (string_of_int  (fst (List.assoc (Sexpr (Bool true)) consts_tbl))) ^ "
 
 global main
 section .text
@@ -122,8 +108,7 @@ main:
     ;; This is where we simulate the missing (define ...) expressions
     ;; for all the primitive procedures.
 " 
-^(String.concat "\n" (List.map const_imp consts_tbl))
-^ (String.concat "\n" (List.map make_primitive_closure tmp)) ^ "
+^ (String.concat "\n" (List.map make_primitive_closure tmp)) ^ "\n
 
 user_code_fragment:
 ;;; The code you compiled will be added here.
@@ -162,7 +147,7 @@ try
   (* load the input file and stdlib *)
   let code =  
     (* (file_to_string "stdlib.scm") ^  *)
-    (file_to_string infile) in
+    (file_to_string infile ) in
 
   (* generate asts for all the code *)
   let asts = string_to_asts code in
@@ -190,3 +175,5 @@ try
 
 (* raise an exception if the input file isn't found *)
 with Invalid_argument(x) -> raise X_missing_input_file;;
+
+

@@ -42,6 +42,12 @@
         %%end:
 %endmacro
 
+; we allocate a single byte for the tag for either void or nil, %1 is the returned pointer, %2 is the value
+%macro MAKE_NIL_VOID 2
+	MALLOC %1, 1
+	mov byte [%1], %2
+%endmacro
+
 %macro SKIP_TYPE_TAG 2
 	mov %1, qword [%2+TYPE_SIZE]	
 %endmacro	
@@ -61,6 +67,19 @@
 %define STRING_LENGTH SKIP_TYPE_TAG
 
 %define SYMBOL_VAL SKIP_TYPE_TAG
+
+%macro MAKE_FLOAT_ 1
+
+	mov rbx, %1
+	MAKE_FLOAT (rax, rbx)
+	mov %1, rax
+
+%endmacro
+
+%macro MAKE_RATIONAL_ 3
+	MAKE_RATIONAL (rax, %1, %2)
+    mov %3, rax
+%endmacro
 
 %macro STRING_ELEMENTS 2
 	lea %1, [%2+TYPE_SIZE+WORD_SIZE]
@@ -147,6 +166,24 @@
         mov qword [%1+TYPE_SIZE+WORD_SIZE], %4
 %endmacro
 
+%macro MAKE_SYMBOL 2
+
+%endmacro
+
+%macro MAKE_SINGLE_LIT 2
+	db %1
+		db %2
+%endmacro
+
+%macro MAKE_LITERAL_SYMBOL 1
+	db T_SYMBOL
+		dq %1
+%endmacro
+
+%macro MAKE_LITERAL_FLOAT 1
+	db T_FLOAT
+		dq %1
+%endmacro
 %macro MAKE_WORDS_LIT 3
 	db %1
         dq %2
@@ -158,7 +195,11 @@
 
 %define MAKE_LITERAL_RATIONAL(num, den) \
 	MAKE_WORDS_LIT T_RATIONAL, num, den
-	
+%macro MAKE_LITERAL_STRING 2
+	db T_STRING
+	dq %2
+	db %1, 0
+%endmacro
 %define MAKE_PAIR(r, car, cdr) \
         MAKE_TWO_WORDS r, T_PAIR, car, cdr
 
