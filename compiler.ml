@@ -50,6 +50,7 @@ let make_prologue consts_tbl fvars_tbl =
       "mov [fvar_tbl+" ^  
       (* (string_of_int (List.assoc prim fvars_tbl)) *) "a"
        ^ "], rax" in
+
   let constant_bytes (c, (a, s)) =
     " dq 1"  
     (* Adapt the deconstruction here to your constants data generation scheme.
@@ -170,14 +171,11 @@ try
   let asts = string_to_asts code in
 
   (* generate the constants table *)
-  (* todo: implement*)
   let consts_tbl = Code_Gen.make_consts_tbl asts in
 
-  (* todo: implement*)
   (* generate the fvars table *)
   let fvars_tbl = Code_Gen.make_fvars_tbl asts in  
 
-  (* todo: implement*)
   (* Generate assembly code for each ast and merge them all into a single string *)
   let generate = Code_Gen.generate consts_tbl fvars_tbl in 
   let code_fragment = String.concat "\n\n"
@@ -185,7 +183,6 @@ try
                            (fun ast -> (generate ast) ^ "\n\tcall write_sob_if_not_void")
                            asts) in
 
-  (* todo: understand this shit *)                         
   (* merge everything into a single large string and print it out *)
   print_string (
     (make_prologue consts_tbl fvars_tbl)  ^ 

@@ -78,8 +78,6 @@ let rec mft acc exp =
 
 
 
-
-
 let wrap_const cnst const = match cnst with
     | Void -> "mov rax, SOB_VOID_ADDRESS"
     | Sexpr(Nil) -> "mov rax, SOB_NIL_ADDRESS"
@@ -92,7 +90,6 @@ let wrap_const cnst const = match cnst with
 let g consts fvars e = match e with
     | Const'(c) -> wrap_const c consts
     | _ -> raise X_not_yet_implemented;;
-
 
 
 
