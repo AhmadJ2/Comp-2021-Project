@@ -52,9 +52,9 @@ let make_paired nt_left nt_right nt =
   let nt = pack nt (function (e, _) -> e) in
     nt;;
    
-let nt_whitespaces = star (char ' ');;
+let nt_whitespaces = star (disj (char '\n') (char ' '));;
 
-let make_spaced nt = make_paired nt_whitespaces nt_whitespaces nt;;
+let make_spaced nt = make_paired nt_whitespaces  nt_whitespaces  nt;;
 
 let maybe nt s =
   try let (e, s) = (nt s) in

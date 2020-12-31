@@ -58,7 +58,7 @@ module type SEMANTICS = sig
   val annotate_lexical_addresses : expr -> expr'
   val annotate_tail_calls : expr' -> expr'
   val box_set : expr' -> expr'
-  (* val bx : string -> expr' list *)
+  val bx : string -> expr' list
 end;;
 
 module Semantics : SEMANTICS = struct
