@@ -195,7 +195,6 @@ module Prims : PRIMS = struct
    cmp rsi, rdi", (* flt_body *)
     "eq"; (* name *)
 
-        (* todo: maybe to add > op *)
         (* < *)
         return_boolean "jl",
         "DENOMINATOR rcx, rsi
@@ -209,7 +208,21 @@ module Prims : PRIMS = struct
 	 movq xmm0, rsi
 	 FLOAT_VAL rdi, rdi
 	 movq xmm1, rdi
-	 ucomisd xmm0, xmm1", "lt";
+   ucomisd xmm0, xmm1", "lt";
+   (* < *)
+   return_boolean "jl",
+   "DENOMINATOR rcx, rsi
+DENOMINATOR rdx, rdi
+NUMERATOR rsi, rsi
+NUMERATOR rdi, rdi
+imul rsi, rdx
+imul rdi, rcx
+cmp rdi, rsi",
+   "FLOAT_VAL rsi, rsi
+\tFLOAT_VAL rdi, rdi
+\tmovq xmm0, rdi
+\tmovq xmm1, rsi
+\tucomisd xmm0, xmm1", "gr";
       ] in
     let comparator comp_wrapper name flt_body rat_body = numeric_op name flt_body rat_body comp_wrapper in
     (String.concat "\n\n" (List.map (fun (a, b, c) -> arith c b a (fun x -> x)) arith_map)) ^
