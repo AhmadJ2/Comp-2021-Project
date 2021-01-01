@@ -10,7 +10,7 @@ malloc_pointer:
 ;;; here we REServe enough Quad-words (64-bit "cells") for the free variables
 ;;; each free variable has 8 bytes reserved for a 64-bit pointer to its value
 fvar_tbl:
-    resq 0
+    resq 2
 
 section .data
 const_tbl:
@@ -18,8 +18,7 @@ db T_VOID
 db T_NIL
 MAKE_SINGLE_LIT T_BOOL ,0
 MAKE_SINGLE_LIT T_BOOL ,1
-MAKE_LITERAL_RATIONAL(34564564564561345, 1)
-MAKE_LITERAL_RATIONAL(123, 1)
+MAKE_LITERAL_RATIONAL(1, 1)
 MAKE_LITERAL_RATIONAL(2, 1)
 
 
@@ -61,21 +60,123 @@ user_code_fragment:
 ;;; The code you compiled will be added here.
 ;;; It will be executed immediately after the closures for 
 ;;; the primitive procedures are set up.
-mov rax, SOB_FALSE_ADDRESS
-	cmp byte[rax+1], 1
-	je true0
-	mov rax, SOB_FALSE_ADDRESS
-	cmp byte[rax+1], 1
-	je true1
-	mov rax, const_tbl+40
-	jmp continue1
-	true1:
-	mov rax, const_tbl+23
-	continue1:
-	jmp continue0
-	true0:
+
 	mov rax, const_tbl+6
-	continue0:
+	call write_sob_if_not_void
+
+
+	mov rax, const_tbl+23
+	call write_sob_if_not_void
+
+
+	
+	MALLOC rax, WORD_SIZE*1
+	mov rbx, qword[rbp + 8 * 2]
+	mov rcx, 0
+loop0:
+	cmp rcx, 0
+	je endd0
+	mov rdx, qword[rbx + 8*(rcx-1)]
+	mov [rax + 8*rcx], rdx
+	dec rcx
+	jmp loop0
+endd0:
+	mov rcx, [rbp + 8*3]
+	MALLOC rbx, WORD_SIZE*rcx
+	mov [rax], rbx
+paramloop0:
+	cmp rcx, 0
+	je end0
+	mov rdx, [rbp + 8*(3+rcx)]
+	mov qword[rbx + 8*(rcx-1)], rdx
+	dec rcx
+	jmp paramloop0
+end0:
+	mov rbx, rax
+	MAKE_CLOSURE(rax, ebx, Lbody0)
+	jmp Lcont0
+Lbody0:
+	push rbp
+	mov rbp, rsp
+	
+	MALLOC rax, WORD_SIZE*2
+	mov rbx, qword[rbp + 8 * 2]
+	mov rcx, 1
+loop1:
+	cmp rcx, 0
+	je endd1
+	mov rdx, qword[rbx + 8*(rcx-1)]
+	mov [rax + 8*rcx], rdx
+	dec rcx
+	jmp loop1
+endd1:
+	mov rcx, [rbp + 8*3]
+	MALLOC rbx, WORD_SIZE*rcx
+	mov [rax], rbx
+paramloop1:
+	cmp rcx, 0
+	je end1
+	mov rdx, [rbp + 8*(3+rcx)]
+	mov qword[rbx + 8*(rcx-1)], rdx
+	dec rcx
+	jmp paramloop1
+end1:
+	mov rbx, rax
+	MAKE_CLOSURE(rax, ebx, Lbody1)
+	jmp Lcont1
+Lbody1:
+	push rbp
+	mov rbp, rsp
+	mov rax, qword[rbp + 8 * (4 + 0)]
+	push rax
+	mov rax, qword[rbp + 8*2]
+	mov rax, qword[rax + 8 * 0]
+	mov rax, qword[raw + 8 * 0]
+	push rax
+	mov rax, qword[LABELINFVARTABLE]
+	push 2
+	CLOSURE_ENV rsi, rax
+	push rsi
+	CLOSURE_CODE rdx, rax
+	call rdx
+	add rsp, 8*1
+	pop rbx
+	shl rbx, 3
+	add rsp, rbx
+	pop rbp
+	ret
+Lcont1:
+	pop rbp
+	ret
+Lcont0:
+	mov qword[LABELINFVARTABLE], rax
+	call write_sob_if_not_void
+
+
+	mov rax, const_tbl+23
+	push rax
+	
+	mov rax, const_tbl+6
+	push rax
+	mov rax, qword[LABELINFVARTABLE]
+	push 1
+	CLOSURE_ENV rsi, rax
+	push rsi
+	CLOSURE_CODE rdx, rax
+	call rdx
+	add rsp, 8*1
+	pop rbx
+	shl rbx, 3
+	add rsp, rbx
+	push 1
+	CLOSURE_ENV rsi, rax
+	push rsi
+	CLOSURE_CODE rdx, rax
+	call rdx
+	add rsp, 8*1
+	pop rbx
+	shl rbx, 3
+	add rsp, rbx
 	call write_sob_if_not_void;;; Clean up the dummy frame, set the exit status to 0 ("success"), 
    ;;; and return from main
    pop rbp
