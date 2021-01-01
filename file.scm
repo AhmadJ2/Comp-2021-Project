@@ -1,7 +1,8 @@
 1 
 2
+(boolean?)
 
-(define f1 (lambda (y) (lambda (x) (+ x y))))
+(define f1 (lambda (y) (lambda (x) (+ x y 12))))
 
 ((f1 1) 2)
 
