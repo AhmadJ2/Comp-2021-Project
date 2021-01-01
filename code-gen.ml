@@ -153,13 +153,13 @@ let rec gener consts fvars env e =
     | Def'(VarFree(v), e) -> (Printf.sprintf "\n\t%s\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
     (* | LambdaOpt'(slst ,s, expr) -> *)
     (* | ApplicTP'(proc, vars) ->  *)
-    | _ -> raise X_not_implemented_codeGen
+    | _ -> ""
 
 and generate_or consts fvars seq env exit_label = Printf.sprintf "%scontinue%d:" (List.fold_left (fun acc x -> acc^(Printf.sprintf "%s\n\t cmp rax, SOB_FALSE_ADDRESS\n\t jne continue%d\n\t" (gener consts fvars env x) exit_label)) "" seq) exit_label
 
 and lambdaenv c env = let env1 = Printf.sprintf "\n\tMALLOC rax, WORD_SIZE*%d\n\tmov rbx, qword[rbp + 8 * 2]\n\tmov rcx, %d\nloop%d:\n\tcmp rcx, 0\n\tje endd%d\n\tmov rdx, qword[rbx + 8*(rcx-1)]\n\tmov [rax + 8*rcx], rdx\n\tdec rcx\n\tjmp loop%d\nendd%d:" env (env-1) c c c c in
-                            let env2 =  Printf.sprintf "mov rcx, [rbp + 8 * 3]\n\tMALLOC rbx, WORD_SIZE*rcx\n\tmov [rax], rbx\nparamloop%d:\n\tcmp rcx, 0\n\tje end%d\n\tmov rdx, [rbp + 8*(3+rcx)]\n\tmov qword[rbx + 8*(rcx-1)], rdx\n\tdec rcx\n\tjmp paramloop%d\nend%d:" c c c c in
-                            Printf.sprintf "%s\n\t%s\n\tmov rbx, rax\n\tMAKE_CLOSURE(rax, ebx, Lbody%d)\n\tjmp Lcont%d" env1 env2 c c
+                            let env2 =  Printf.sprintf "mov rcx, [rbp + 8 * 3]\n\tpush rcx\n\tlea rcx, [rcx*WORD_SIZE]\n\tMALLOC rbx, rcx\n\tpop rcx\n\tmov [rax], rbx\nparamloop%d:\n\tcmp rcx, 0\n\tje end%d\n\tmov rdx, [rbp + 8*(3+rcx)]\n\tmov qword[rbx + 8*(rcx-1)], rdx\n\tdec rcx\n\tjmp paramloop%d\nend%d:" c c c c in
+                            Printf.sprintf "%s\n\t%s\n\tmov rbx, rax\n\tMAKE_CLOSURE(rax, rbx, Lbody%d)\n\tjmp Lcont%d" env1 env2 c c
 
 and lambdaBody consts fvars body count env = Printf.sprintf "Lbody%d:\n\tpush rbp\n\tmov rbp, rsp\n%s\n\tpop rbp\n\tret\nLcont%d:" count (gener consts fvars env body) count;;
 

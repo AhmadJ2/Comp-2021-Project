@@ -1,10 +1,12 @@
-1 
-2
-(boolean?)
+;(* 2 5)
+;(define a (lambda (x y) (+ x y)))
+;(define b a)
+;(b 1 2)
+;(* -1 2)
+;(+ 1 2 3 4 5 6)
+;(define - (lambda (x y) (+ ())))
 
-(define f1 (lambda (y) (lambda (x) (+ x y 12))))
 
-((f1 1) 2)
- (< 1 2)
- (> 1 2)
- (= 4 5)
+
+(+ 1 2 3 4 5)
+(not #f)
