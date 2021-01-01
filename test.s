@@ -10,7 +10,7 @@ malloc_pointer:
 ;;; here we REServe enough Quad-words (64-bit "cells") for the free variables
 ;;; each free variable has 8 bytes reserved for a 64-bit pointer to its value
 fvar_tbl:
-    resq 3
+    resq 5
 
 section .data
 const_tbl:
@@ -21,6 +21,8 @@ const_tbl:
 	MAKE_LITERAL_RATIONAL(1, 1)
 	MAKE_LITERAL_RATIONAL(2, 1)
 	MAKE_LITERAL_RATIONAL(12, 1)
+	MAKE_LITERAL_RATIONAL(4, 1)
+	MAKE_LITERAL_RATIONAL(5, 1)
 
 
 ;;; These macro definitions are required for the primitive
@@ -55,9 +57,13 @@ main:
     ;; This is where we simulate the missing (define ...) expressions
     ;; for all the primitive procedures.
 	MAKE_CLOSURE(rax, SOB_NIL_ADDRESS, boolean?)
-	mov [fvar_tbl+0], rax
+	mov [fvar_tbl + 8 * 0], rax
 	MAKE_CLOSURE(rax, SOB_NIL_ADDRESS, add)
-	mov [fvar_tbl+2], rax
+	mov [fvar_tbl + 8 * 2], rax
+	MAKE_CLOSURE(rax, SOB_NIL_ADDRESS, eq)
+	mov [fvar_tbl + 8 * 4], rax
+	MAKE_CLOSURE(rax, SOB_NIL_ADDRESS, lt)
+	mov [fvar_tbl + 8 * 3], rax
 	
 
 
@@ -74,7 +80,7 @@ user_code_fragment:
 	mov rax, const_tbl+23
 	call write_sob_if_not_void
 
-	mov rax, qword[fvar_tbl + 0]
+	mov rax, qword[fvar_tbl + 8 * 0]
 	push 0
 	CLOSURE_ENV rsi, rax
 	push rsi
@@ -147,14 +153,14 @@ Lbody1:
 	mov rbp, rsp
 	mov rax, qword[rbp + 8 * (4 + 0)]
 	push rax
-	mov rax, qword[rbp + 8*2]
+	mov rax, qword[rbp + 8 * 2]
 	mov rax, qword[rax + 8 * 0]
-	mov rax, qword[raw + 8 * 0]
+	mov rax, qword[rax + 8 * 0]
 	push rax
 	
 	mov rax, const_tbl+40
 	push rax
-	mov rax, qword[fvar_tbl + 2]
+	mov rax, qword[fvar_tbl + 8 * 2]
 	push 3
 	CLOSURE_ENV rsi, rax
 	push rsi
@@ -170,7 +176,7 @@ Lcont1:
 	pop rbp
 	ret
 Lcont0:
-	mov qword[fvar_tbl + 1], rax
+	mov qword[fvar_tbl + 8 * 1], rax
 	mov rax, SOB_VOID_ADDRESS
 	call write_sob_if_not_void
 
@@ -180,7 +186,7 @@ Lcont0:
 		
 	mov rax, const_tbl+6
 	push rax
-	mov rax, qword[fvar_tbl + 1]
+	mov rax, qword[fvar_tbl + 8 * 1]
 	push 1
 	CLOSURE_ENV rsi, rax
 	push rsi
@@ -191,6 +197,42 @@ Lcont0:
 	shl rbx, 3
 	add rsp, rbx
 	push 1
+	CLOSURE_ENV rsi, rax
+	push rsi
+	CLOSURE_CODE rdx, rax
+	call rdx
+	add rsp, 8*1
+	pop rbx
+	shl rbx, 3
+	add rsp, rbx
+	call write_sob_if_not_void
+
+	
+	mov rax, const_tbl+6
+	push rax
+	
+	mov rax, const_tbl+23
+	push rax
+	mov rax, qword[fvar_tbl + 8 * 3]
+	push 2
+	CLOSURE_ENV rsi, rax
+	push rsi
+	CLOSURE_CODE rdx, rax
+	call rdx
+	add rsp, 8*1
+	pop rbx
+	shl rbx, 3
+	add rsp, rbx
+	call write_sob_if_not_void
+
+	
+	mov rax, const_tbl+57
+	push rax
+	
+	mov rax, const_tbl+74
+	push rax
+	mov rax, qword[fvar_tbl + 8 * 4]
+	push 2
 	CLOSURE_ENV rsi, rax
 	push rsi
 	CLOSURE_CODE rdx, rax

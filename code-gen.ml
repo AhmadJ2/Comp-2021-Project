@@ -136,12 +136,12 @@ let rec gener consts fvars env e =
         (gener consts fvars env tst) c  (gener consts fvars env els) c c (gener consts fvars env thn) c))
     | Var'(VarParam(_, minor)) -> (Printf.sprintf "mov rax, qword[rbp + 8 * (4 + %d)]" minor) 
     | Set'(VarParam(_, minor), ex) -> (Printf.sprintf "%s\n\tmov qword[rbp + 8  * ( 4 + %d)], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env ex) minor)
-    | Var'(VarBound(_,major, minor)) -> (Printf.sprintf "mov rax, qword[rbp + 8*2]\n\tmov rax, qword[rax + 8 * %d]\n\tmov rax, qword[raw + 8 * %d]" major minor) 
-    | Set'(VarBound(_, major, minor), e) -> (let e = gener consts fvars env e in (Printf.sprintf "%s \n\tmov rbx, qword[rbp +8*2]\n\tmov rbx, [rbx + 8*%d]\n\tmov qword[rbx + 9*%d], rax\n\t mov rax, SOB_VOID_ADDRESS" e major minor))
+    | Var'(VarBound(_,major, minor)) -> (Printf.sprintf "mov rax, qword[rbp + 8 * 2]\n\tmov rax, qword[rax + 8 * %d]\n\tmov rax, qword[rax + 8 * %d]" major minor) 
+    | Set'(VarBound(_, major, minor), e) -> (let e = gener consts fvars env e in (Printf.sprintf "%s \n\tmov rbx, qword[rbp +8 * 2]\n\tmov rbx, [rbx + 8*%d]\n\tmov qword[rbx + 9*%d], rax\n\t mov rax, SOB_VOID_ADDRESS" e major minor))
     (* todo *)
-    | Var'(VarFree(v)) -> Printf.sprintf "mov rax, qword[fvar_tbl + %d]" (List.assoc v fvars)
+    | Var'(VarFree(v)) -> Printf.sprintf "mov rax, qword[fvar_tbl + 8 * %d]" (List.assoc v fvars)
     (* todo *)
-    | Set'(VarFree(v), e) -> (let e = gener consts fvars env e in Printf.sprintf "%s\n\t mov qword[fvar_tbl + %d], rax\n\tmov rax, SOB_VOID_ADDRESS" e (List.assoc v fvars))
+    | Set'(VarFree(v), e) -> (let e = gener consts fvars env e in Printf.sprintf "%s\n\t mov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" e (List.assoc v fvars))
     (* todo: test it*)
     | Seq'(seq) -> (List.fold_left (fun acc x->acc^(Printf.sprintf "%s\n\t" (gener consts fvars env x))) "" seq)
     (* todo: test it*)
@@ -151,13 +151,13 @@ let rec gener consts fvars env e =
     | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf "%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
     (* todo: test it*)
     | Applic'(proc, vars) -> let proc = (gener consts fvars env proc) in let n = (List.length vars) in (Printf.sprintf "\t%s%s\n\tpush %d\n\tCLOSURE_ENV rsi, rax\n\tpush rsi\n\tCLOSURE_CODE rdx, rax\n\tcall rdx\n\tadd rsp, 8*1\n\tpop rbx\n\tshl rbx, 3\n\tadd rsp, rbx" (String.concat "" (List.map (fun v -> (Printf.sprintf "%s\n\tpush rax\n\t" (gener consts fvars env v))) vars)) proc n)
-    | Def'(VarFree(v), e) -> (Printf.sprintf "\n\t%s\n\tmov qword[fvar_tbl + %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
+    | Def'(VarFree(v), e) -> (Printf.sprintf "\n\t%s\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
     | _ -> raise X_not_implemented_codeGen
 
 and generate_or consts fvars seq env exit_label = Printf.sprintf "%scontinue%d:" (List.fold_left (fun acc x -> acc^(Printf.sprintf "%s\n\t cmp rax, SOB_FALSE_ADDRESS\n\t jne continue%d\n\t" (gener consts fvars env x) exit_label)) "" seq) exit_label
 
 and lambdaenv c env = let env1 = Printf.sprintf "\n\tMALLOC rax, WORD_SIZE*%d\n\tmov rbx, qword[rbp + 8 * 2]\n\tmov rcx, %d\nloop%d:\n\tcmp rcx, 0\n\tje endd%d\n\tmov rdx, qword[rbx + 8*(rcx-1)]\n\tmov [rax + 8*rcx], rdx\n\tdec rcx\n\tjmp loop%d\nendd%d:" env (env-1) c c c c in
-                            let env2 =  Printf.sprintf "mov rcx, [rbp + 8*3]\n\tMALLOC rbx, WORD_SIZE*rcx\n\tmov [rax], rbx\nparamloop%d:\n\tcmp rcx, 0\n\tje end%d\n\tmov rdx, [rbp + 8*(3+rcx)]\n\tmov qword[rbx + 8*(rcx-1)], rdx\n\tdec rcx\n\tjmp paramloop%d\nend%d:" c c c c in
+                            let env2 =  Printf.sprintf "mov rcx, [rbp + 8 * 3]\n\tMALLOC rbx, WORD_SIZE*rcx\n\tmov [rax], rbx\nparamloop%d:\n\tcmp rcx, 0\n\tje end%d\n\tmov rdx, [rbp + 8*(3+rcx)]\n\tmov qword[rbx + 8*(rcx-1)], rdx\n\tdec rcx\n\tjmp paramloop%d\nend%d:" c c c c in
                             Printf.sprintf "%s\n\t%s\n\tmov rbx, rax\n\tMAKE_CLOSURE(rax, ebx, Lbody%d)\n\tjmp Lcont%d" env1 env2 c c
 
 and lambdaBody consts fvars body count env = Printf.sprintf "Lbody%d:\n\tpush rbp\n\tmov rbp, rsp\n%s\n\tpop rbp\n\tret\nLcont%d:" count (gener consts fvars env body) count;;

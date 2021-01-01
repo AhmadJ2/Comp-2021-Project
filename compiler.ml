@@ -46,7 +46,7 @@ let make_prologue consts_tbl fvars_tbl =
        If you use a different addressing scheme (e.g., a label for each fvar), change the 
        addressing here to match. *)
        try ("MAKE_CLOSURE(rax, SOB_NIL_ADDRESS, " ^ label  ^ ")\n\t" ^
-      "mov [fvar_tbl+" ^  
+      "mov [fvar_tbl + 8 * " ^  
       string_of_int (List.assoc prim fvars_tbl)^ "], rax\n\t") with Not_found ->("")
         in
 
