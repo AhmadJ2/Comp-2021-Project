@@ -123,7 +123,7 @@ let wrap_const cnst const = match cnst with
     | Sexpr(Pair(car, cdr)) -> "\n\tmov rax, const_tbl+" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^""
     | Sexpr(Symbol(s))-> "\n\tmov rax, const_tbl+" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"";;
 
-
+(* todo: apply proc: maybe macro expand it *)
 
 let counter = ref 0;;
 
@@ -138,9 +138,7 @@ let rec gener consts fvars env e =
     | Set'(VarParam(_, minor), ex) -> (Printf.sprintf "%s\n\tmov qword[rbp + 8  * ( 4 + %d)], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env ex) minor)
     | Var'(VarBound(_,major, minor)) -> (Printf.sprintf "mov rax, qword[rbp + 8 * 2]\n\tmov rax, qword[rax + 8 * %d]\n\tmov rax, qword[rax + 8 * %d]" major minor) 
     | Set'(VarBound(_, major, minor), e) -> (let e = gener consts fvars env e in (Printf.sprintf "%s \n\tmov rbx, qword[rbp +8 * 2]\n\tmov rbx, [rbx + 8*%d]\n\tmov qword[rbx + 9*%d], rax\n\t mov rax, SOB_VOID_ADDRESS" e major minor))
-    (* todo *)
     | Var'(VarFree(v)) -> Printf.sprintf "mov rax, qword[fvar_tbl + 8 * %d]" (List.assoc v fvars)
-    (* todo *)
     | Set'(VarFree(v), e) -> (let e = gener consts fvars env e in Printf.sprintf "%s\n\t mov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" e (List.assoc v fvars))
     (* todo: test it*)
     | Seq'(seq) -> (List.fold_left (fun acc x->acc^(Printf.sprintf "%s\n\t" (gener consts fvars env x))) "" seq)

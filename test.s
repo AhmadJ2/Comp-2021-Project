@@ -105,7 +105,7 @@ loop0:
 	dec rcx
 	jmp loop0
 endd0:
-	mov rcx, [rbp + 8*3]
+	mov rcx, [rbp + 8 * 3]
 	MALLOC rbx, WORD_SIZE*rcx
 	mov [rax], rbx
 paramloop0:
@@ -134,7 +134,7 @@ loop1:
 	dec rcx
 	jmp loop1
 endd1:
-	mov rcx, [rbp + 8*3]
+	mov rcx, [rbp + 8 * 3]
 	MALLOC rbx, WORD_SIZE*rcx
 	mov [rax], rbx
 paramloop1:
@@ -514,7 +514,7 @@ lt:
 	 movq xmm0, rsi
 	 FLOAT_VAL rdi, rdi
 	 movq xmm1, rdi
-	 ucomisd xmm0, xmm1
+   ucomisd xmm0, xmm1
              jmp .op_return
           .lt_rat:
              DENOMINATOR rcx, rsi
@@ -524,6 +524,38 @@ lt:
 	 imul rsi, rdx
 	 imul rdi, rcx
 	 cmp rsi, rdi
+          .op_return:
+      jl .true
+       mov rax, SOB_FALSE_ADDRESS
+       jmp .return
+       .true:
+       mov rax, SOB_TRUE_ADDRESS
+       .return:
+         pop rbp
+         ret
+
+gr:
+       push rbp
+       mov rbp, rsp 
+       mov rsi, PVAR(0)
+	mov rdi, PVAR(1)
+	mov dl, byte [rsi]
+             cmp dl, T_FLOAT
+	     jne .gr_rat
+             FLOAT_VAL rsi, rsi
+FLOAT_VAL rdi, rdi
+movq xmm0, rdi
+movq xmm1, rsi
+ucomisd xmm0, xmm1
+             jmp .op_return
+          .gr_rat:
+             DENOMINATOR rcx, rsi
+DENOMINATOR rdx, rdi
+NUMERATOR rsi, rsi
+NUMERATOR rdi, rdi
+imul rsi, rdx
+imul rdi, rcx
+cmp rdi, rsi
           .op_return:
       jl .true
        mov rax, SOB_FALSE_ADDRESS
