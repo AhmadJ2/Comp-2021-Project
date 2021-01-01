@@ -219,10 +219,10 @@ imul rsi, rdx
 imul rdi, rcx
 cmp rdi, rsi",
    "FLOAT_VAL rsi, rsi
-FLOAT_VAL rdi, rdi
-movq xmm0, rdi
-movq xmm1, rsi
-ucomisd xmm0, xmm1", "gr";
+\tFLOAT_VAL rdi, rdi
+\tmovq xmm0, rdi
+\tmovq xmm1, rsi
+\tucomisd xmm0, xmm1", "gr";
       ] in
     let comparator comp_wrapper name flt_body rat_body = numeric_op name flt_body rat_body comp_wrapper in
     (String.concat "\n\n" (List.map (fun (a, b, c) -> arith c b a (fun x -> x)) arith_map)) ^
