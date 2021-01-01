@@ -124,6 +124,7 @@ let wrap_const cnst const = match cnst with
     | Sexpr(Symbol(s))-> "\n\tmov rax, const_tbl+" ^ (string_of_int  (fst (List.assoc (cnst) const))) ^"";;
 
 (* todo: apply proc: maybe macro expand it *)
+(* todo: expand +, *, -, / *)
 
 let counter = ref 0;;
 
@@ -150,6 +151,8 @@ let rec gener consts fvars env e =
     (* todo: test it*)
     | Applic'(proc, vars) -> let proc = (gener consts fvars env proc) in let n = (List.length vars) in (Printf.sprintf "\t%s%s\n\tpush %d\n\tCLOSURE_ENV rsi, rax\n\tpush rsi\n\tCLOSURE_CODE rdx, rax\n\tcall rdx\n\tadd rsp, 8*1\n\tpop rbx\n\tshl rbx, 3\n\tadd rsp, rbx" (String.concat "" (List.map (fun v -> (Printf.sprintf "%s\n\tpush rax\n\t" (gener consts fvars env v))) vars)) proc n)
     | Def'(VarFree(v), e) -> (Printf.sprintf "\n\t%s\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
+    (* | LambdaOpt'(slst ,s, expr) -> *)
+    (* | ApplicTP'(proc, vars) ->  *)
     | _ -> raise X_not_implemented_codeGen
 
 and generate_or consts fvars seq env exit_label = Printf.sprintf "%scontinue%d:" (List.fold_left (fun acc x -> acc^(Printf.sprintf "%s\n\t cmp rax, SOB_FALSE_ADDRESS\n\t jne continue%d\n\t" (gener consts fvars env x) exit_label)) "" seq) exit_label
