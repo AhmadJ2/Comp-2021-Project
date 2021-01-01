@@ -73,7 +73,7 @@ let rec lex env expr =  match expr with
       | If(test, thn , alt) -> If'(lex env test, lex env thn , lex env alt)
       | Seq(lst) -> Seq'(List.map (lex env) lst)
       | LambdaSimple(slst, expr) -> LambdaSimple'(slst, lex (slst::env) expr) 
-      | LambdaOpt(slst ,s, expr) -> LambdaOpt'(slst, s, lex (slst::env) expr)
+      | LambdaOpt(slst ,s, expr) -> LambdaOpt'(slst, s, lex ((slst@[s])::env) expr)
       | Def(Var(s), vl) -> Def'(VarFree(s), lex env vl)
       | Set(Var(vr),vl) -> Set'(check_vars env vr, lex env vl)
       | Var(v) -> Var'(check_vars env v)

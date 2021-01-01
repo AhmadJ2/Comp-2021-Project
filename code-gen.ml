@@ -48,7 +48,70 @@ let find_off lst =
   | Sexpr(Symbol(_)) -> 9+siz
   ))))
   
+let imp_macro n c= Printf.sprintf "mov rbx, [rsp + 8*3]
+cmp rbx, %d
+je e%dquals_
+cmp rbx, %d
+jl l%desser_
 
+R%dgreaters_:
+lea rcx, [rbx - %d] ;; difference, length of the list
+lea rdx, [rsp + 8*(3+rbx)]
+mov rsi, [rdx]
+MAKE_PAIR(rax,rsi,SOB_NIL_ADDRESS)
+sub rdx, 8
+g%dreatloop_:
+cmp rcx, 0
+je g%dreatend_
+mov rsi, [rdx]
+push rbx
+mov rbx, rax
+MAKE_PAIR(rax,rsi,rbx)
+pop rbx
+sub rdx, 8
+dec rcx
+jmp g%dreatloop_
+
+
+g%dreatend_:
+mov [rsp + 8*(3+rbx)], rax
+lea rax, [rsp+8*(2+rbx)]
+lea rcx, [3 + %d]
+m%doveloop_:
+mov rdx, [rsp + 8*(rcx-1)]
+mov [rax], rdx
+sub rax, 8
+dec rcx
+cmp rcx, 0
+jne m%doveloop_
+lea rcx, [rbx - %d]
+lea rbx ,[8*rcx]
+add rsp, rbx
+sub [rsp + 8* 3], rcx
+jmp e%dnd_opt_
+
+l%desser_:
+lea rax, [4+rbx]
+mov rcx, 0
+l%dessloop_:
+cmp rax, 0
+je w%drapit_
+mov rdx, [rsp + (8*rcx)]
+mov [rsp + 8*rcx - 8], rdx
+dec rax
+inc rcx
+jmp l%dessloop_
+w%drapit_:
+sub rsp, 8
+mov rax, SOB_NIL_ADDRESS
+mov [rsp + 8*(4 + rbx)], rax
+add qword [rsp + 8*3], 1
+jmp e%dnd_opt_
+e%dquals_:
+mov rcx, [rsp + 8*(3+rbx)]
+MAKE_PAIR(rax, rcx, SOB_NIL_ADDRESS)
+mov [rsp + 8*(3+rbx)], rax
+e%dnd_opt_:" n c n c c n c c c c n c c n c c c c c c c c c 
   
 let rec mct acc exp = 
     match exp with 
@@ -147,21 +210,23 @@ let rec gener consts fvars env e =
     | Or'(seq) -> let c = !counter in let _ = (counter:=!counter+1) in (generate_or consts fvars seq env c)
     | BoxGet'(v) -> (Printf.sprintf "%s\n\tmov rax, qword[rax]" (gener consts fvars env (Var'(v))))
     | BoxSet'(v, e) -> (Printf.sprintf "%s\n\tpush rax, %s\n\tpop qword[rax]\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e) (gener consts fvars env (Var'(v))))
-    | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf "%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
     (* todo: test it*)
-    | Applic'(proc, vars) -> let proc = (gener consts fvars env proc) in let n = (List.length vars) in (Printf.sprintf "\t%s%s\n\tpush %d\n\tCLOSURE_ENV rsi, rax\n\tpush rsi\n\tCLOSURE_CODE rdx, rax\n\tcall rdx\n\tadd rsp, 8*1\n\tpop rbx\n\tshl rbx, 3\n\tadd rsp, rbx" (String.concat "" (List.map (fun v -> (Printf.sprintf "%s\n\tpush rax\n\t" (gener consts fvars env v))) vars)) proc n)
+    | Applic'(proc, vars) -> let proc = (gener consts fvars env proc) in let n = (List.length vars) in (Printf.sprintf "\t%s%s\n\tpush %d\n\tCLOSURE_ENV rsi, rax\n\tpush rsi\n\tCLOSURE_CODE rdx, rax\n\tcall rdx\n\tadd rsp, 8*1\n\tpop rbx\n\tshl rbx, 3\n\tadd rsp, rbx" (String.concat "" (List.map (fun v -> (Printf.sprintf "%s\n\tpush rax\n\t" (gener consts fvars env v))) (List.rev vars))) proc n)
     | Def'(VarFree(v), e) -> (Printf.sprintf "\n\t%s\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
-    (* | LambdaOpt'(slst ,s, expr) -> *)
+    | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf "%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
+    | LambdaOpt'(slst ,s, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda opt\n%s\n\n\n\n\n\n%s" (lambdaenv c (env + 1)) (lambdaBodyopt  consts fvars body c (env + 1) (1+ (List.length slst))))
     (* | ApplicTP'(proc, vars) ->  *)
     | _ -> ""
 
 and generate_or consts fvars seq env exit_label = Printf.sprintf "%scontinue%d:" (List.fold_left (fun acc x -> acc^(Printf.sprintf "%s\n\t cmp rax, SOB_FALSE_ADDRESS\n\t jne continue%d\n\t" (gener consts fvars env x) exit_label)) "" seq) exit_label
 
-and lambdaenv c env = let env1 = Printf.sprintf "\n\tMALLOC rax, WORD_SIZE*%d\n\tmov rbx, qword[rbp + 8 * 2]\n\tmov rcx, %d\nloop%d:\n\tcmp rcx, 0\n\tje endd%d\n\tmov rdx, qword[rbx + 8*(rcx-1)]\n\tmov [rax + 8*rcx], rdx\n\tdec rcx\n\tjmp loop%d\nendd%d:" env (env-1) c c c c in
+and lambdaenv c env = let env1 = Printf.sprintf ";lambda env\n\n\tMALLOC rax, WORD_SIZE*%d\n\tmov rbx, qword[rbp + 8 * 2]\n\tmov rcx, %d\nloop%d:\n\tcmp rcx, 0\n\tje endd%d\n\tmov rdx, qword[rbx + 8*(rcx-1)]\n\tmov [rax + 8*rcx], rdx\n\tdec rcx\n\tjmp loop%d\nendd%d:" env (env-1) c c c c in
                             let env2 =  Printf.sprintf "mov rcx, [rbp + 8 * 3]\n\tpush rcx\n\tlea rcx, [rcx*WORD_SIZE]\n\tMALLOC rbx, rcx\n\tpop rcx\n\tmov [rax], rbx\nparamloop%d:\n\tcmp rcx, 0\n\tje end%d\n\tmov rdx, [rbp + 8*(3+rcx)]\n\tmov qword[rbx + 8*(rcx-1)], rdx\n\tdec rcx\n\tjmp paramloop%d\nend%d:" c c c c in
                             Printf.sprintf "%s\n\t%s\n\tmov rbx, rax\n\tMAKE_CLOSURE(rax, rbx, Lbody%d)\n\tjmp Lcont%d" env1 env2 c c
 
-and lambdaBody consts fvars body count env = Printf.sprintf "Lbody%d:\n\tpush rbp\n\tmov rbp, rsp\n%s\n\tpop rbp\n\tret\nLcont%d:" count (gener consts fvars env body) count;;
+and lambdaBody consts fvars body count env = Printf.sprintf "; Lambda body\nLbody%d:\n\tpush rbp\n\tmov rbp, rsp\n%s\n\tpop rbp\n\tret\nLcont%d:" count (gener consts fvars env body) count
+
+and lambdaBodyopt consts fvars body count env n = let opt_macro = imp_macro n count in Printf.sprintf ";lambda body\nLbody%d:\n\tpush rbp\n\t%s\n\tmov rbp, rsp\n%s\n\tpop rbp\n\tret\nLcont%d:" count opt_macro (gener consts fvars env body) count 
 
 
 
