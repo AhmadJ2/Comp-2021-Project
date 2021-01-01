@@ -41,7 +41,6 @@ let make_prologue consts_tbl fvars_tbl =
     (* you can add yours here *)
     
   ] in
-  let tmp = [] in
   let make_primitive_closure (prim, label) =
     (* This implementation assumes fvars are addressed by an offset from the label `fvar_tbl`.
        If you use a different addressing scheme (e.g., a label for each fvar), change the 
@@ -108,7 +107,7 @@ main:
     ;; This is where we simulate the missing (define ...) expressions
     ;; for all the primitive procedures.
 " 
-^ (String.concat "\n" (List.map make_primitive_closure tmp)) ^ "\n
+^ (String.concat "\n" (List.map make_primitive_closure primitive_names_to_labels)) ^ "\n
 
 user_code_fragment:
 ;;; The code you compiled will be added here.
