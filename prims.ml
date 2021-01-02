@@ -407,7 +407,19 @@ module Prims : PRIMS = struct
     CLOSURE_CODE rbx, rax
     pop rbp
     jmp rbx
-         ", make_unary, "apply"; 
+         "
+         
+         , make_unary , "apply";
+
+         "
+         mov [rsi+1], rdi
+         mov rax, SOB_VOID_ADDRESS
+         
+         ", make_binary , "set_car";
+
+         "mov [rsi+9], rdi
+         mov rax, SOB_VOID_ADDRESS
+         ", make_binary , "set_cdr"; 
       ] in
     String.concat "\n\n" (List.map (fun (a, b, c) -> (b c a)) misc_parts);;
 
