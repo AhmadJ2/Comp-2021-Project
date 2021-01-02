@@ -1,5 +1,3 @@
-
-
 (define map
   (let ((null? null?)
 	(car car) (cdr cdr)
@@ -20,7 +18,9 @@
 			)
 			))))
     (lambda (f . args)
-      (map-many f args)))))
+    
+      (map-many f args)
+      ))))
 
 ;(let ((consf cons) (applyf apply))  (cons (apply + 1 '()) (apply + '())))
 (map + '(1 2 3))
