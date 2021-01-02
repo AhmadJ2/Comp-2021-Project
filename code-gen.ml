@@ -191,8 +191,9 @@ let wrap_const cnst const = match cnst with
 
 let counter = ref 0;;
 
+
 let rec gener consts fvars env e = 
-      match e with
+      Printf.sprintf "%s" (match e with
     | Const'(c) -> wrap_const c consts
     | If'(tst, thn, els) -> 
       ( let c = !counter in let _ = (counter:=!counter+1) in
@@ -222,7 +223,7 @@ let rec gener consts fvars env e =
     | LambdaOpt'(slst ,s, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda opt\n%s\n\n\n\n\n\n%s" (lambdaenv c (env + 1)) (lambdaBodyopt  consts fvars body c (env + 1) (1+ (List.length slst))))
     (* | ApplicTP'(proc, vars) ->  *)
     | Box'(v) -> Printf.sprintf ";box\n\t%s\n\tMAKE_BOX rbx\n\tmov [rbx], rax\n\tmov rax, rbx" (gener consts fvars env (Var'(v)))
-    | _ -> raise X_not_implemented_codeGen
+    | _ -> raise X_not_implemented_codeGen)
 
 and generate_or consts fvars seq env exit_label = Printf.sprintf "%scontinue%d:" (List.fold_left (fun acc x -> acc^(Printf.sprintf "%s\n\t cmp rax, SOB_FALSE_ADDRESS\n\t jne continue%d\n\t" (gener consts fvars env x) exit_label)) "" seq) exit_label
 

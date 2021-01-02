@@ -21,4 +21,4 @@
       (map-many f args)))))
 
 ;(let ((consf cons) (applyf apply))  (cons (apply + 1 '()) (apply + '())))
-;(map + (1 2 3))
+(map + (1 2 3))
