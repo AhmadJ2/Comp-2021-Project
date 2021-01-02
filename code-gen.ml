@@ -202,7 +202,7 @@ let rec gener consts fvars env e =
     | Set'(VarParam(s, minor), ex) -> (Printf.sprintf ";set varparam %s\n\t%s\n\tmov qword[rbp + 8  * ( 4 + %d)], rax\n\tmov rax, SOB_VOID_ADDRESS" s (gener consts fvars env ex) minor)
     | Var'(VarBound(s,major, minor)) -> (Printf.sprintf ";varbound %s\n\tmov rax, qword[rbp + 8 * 2]\n\tmov rax, qword[rax + 8 * %d]\n\tmov rax, qword[rax + 8 * %d]" s major minor) 
     | Set'(VarBound(s, major, minor), e) -> (let e = gener consts fvars env e in (Printf.sprintf ";set varbound %s\n\t%s \n\tmov rbx, qword[rbp +8 * 2]\n\tmov rbx, [rbx + 8*%d]\n\tmov qword[rbx + 8*%d], rax\n\t mov rax, SOB_VOID_ADDRESS" s e major minor))
-    | Var'(VarFree(v)) -> Printf.sprintf ";varfree\n\tmov rax, qword[fvar_tbl + 8 * %d]" (List.assoc v fvars)
+    | Var'(VarFree(v)) -> Printf.sprintf ";varfree %s\n\tmov rax, qword[fvar_tbl + 8 * %d]" v (List.assoc v fvars)
     | Set'(VarFree(v), e) -> (let e = gener consts fvars env e in Printf.sprintf ";set varfree\n\t%s\n\t mov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" e (List.assoc v fvars))
     (* todo: test it*)
     | Seq'(seq) -> ";seq\n\t" ^(List.fold_left (fun acc x->acc^(Printf.sprintf "%s\n\t" (gener consts fvars env x))) "" seq)
