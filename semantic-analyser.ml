@@ -253,7 +253,8 @@ and change_to_box_helper var exp  = match exp with
 
 let box_set e = boxes e;;
 
-let bx e = List.map box_set (tl e);;
+(* let bx e = List.map box_set (tl e);; *)
+let bx e = lx e;;
 
 let run_semantics expr =
   box_set
