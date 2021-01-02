@@ -7,10 +7,10 @@
 
    Note that the implementation below contain no error handling or correctness-checking
    of any kind. This is because we will not test your compilers on invalid input.
-   However, adding correctness-checking and error handling *as general templates* would be
+   However, adding correctness-checking and error handling as general templates would be
    rather simple.
  *)
-module type PRIMS = sig
+ module type PRIMS = sig
   val procs : string;;
 end
 
@@ -53,7 +53,7 @@ module Prims : PRIMS = struct
      with 1,2 or 3 arguments.
      These helper functions inject instructions to get parameter values off the stack and into registers
      to work with.
-     The argument register assignment follows the x86 64bit Unix ABI, because there needs to be *some*
+     The argument register assignment follows the x86 64bit Unix ABI, because there needs to be some
      kind of consistency, so why not just use the standard ABI.
      See page 22 in https://raw.githubusercontent.com/wiki/hjl-tools/x86-psABI/x86-64-psABI-1.0.pdf
    *)
@@ -404,8 +404,8 @@ module Prims : PRIMS = struct
     sub qword[rsp +8*3], 1
     CLOSURE_ENV rbx, rax
     mov [rsp + 8*2], rbx
-    pop rbx
     CLOSURE_CODE rbx, rax
+    pop rbp
     jmp rbx
          ", make_unary, "apply"; 
       ] in
