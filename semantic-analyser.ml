@@ -148,8 +148,7 @@ let annotate_tail_calls e = match e with
       | Applic'(e, exps) -> ApplicTP'(e, List.map (tails 1) exps)
       | _ -> tails 0 e;;
 
-(* let tl e = List.map annotate_tail_calls (lx e);; *)
-let tl e = lx e;;
+let tl e = List.map annotate_tail_calls (lx e);;
 
 let rec boxes exprs = match exprs with
     | LambdaSimple'(vars, seq) -> LambdaSimple'(vars, chech_if_vars_need_to_box vars 0 (boxes seq) )
@@ -266,3 +265,15 @@ let run_semantics expr =
 end;;
 
 
+LambdaSimple' (["c"; "b"],
+
+ Seq'
+   [Set' (VarParam ("c", 0),
+      LambdaSimple' (["x"],
+            If' (Var' (VarParam ("x", 0)), Var' (VarParam ("x", 0)),
+                  Applic' (Var' (VarBound ("b", 0, 1)), [Const' (Sexpr (Bool true))]))));
+
+   Set' (VarParam ("b", 1), LambdaSimple' (["x"], Var' (VarParam ("x", 0))));
+
+   Applic' (Var' (VarParam ("c", 0)), [Const' (Sexpr (Bool false))]);
+   ])

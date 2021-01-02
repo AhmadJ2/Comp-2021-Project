@@ -2,12 +2,10 @@ Def' (VarFree "map",
   Applic'
    (LambdaSimple' (["null?"; "car"; "cdr"; "cons"; "apply"],
      Applic'
-
       (LambdaSimple' (["map-many"; "map-one"],
         Seq'
          [Set' (VarParam ("map-many", 0), Box' (VarParam ("map-many", 0)));
           Set' (VarParam ("map-one", 1), Box' (VarParam ("map-one", 1)));
-          
           BoxSet' (VarParam ("map-many", 0),
            LambdaSimple' (["f"; "lists"],
             If'
@@ -44,22 +42,7 @@ Def' (VarFree "map",
               Applic' (BoxGet' (VarBound ("map-many", 1, 0)),
                [Var' (VarParam ("f", 0)); Var' (VarParam ("args", 1))]))),
            [])]),
-
       [Const' (Sexpr (String "whatever")); Const' (Sexpr (String "whatever"))]
       )),
-
    [Var' (VarFree "null?"); Var' (VarFree "car"); Var' (VarFree "cdr");
     Var' (VarFree "cons"); Var' (VarFree "apply")]))
-
-
-
-
-    Applic'
-  (LambdaSimple' (["consf"; "applyf"],
-    Applic' (Var' (VarFree "cons"),
-     [Applic' (Var' (VarFree "apply"),
-       [Var' (VarFree "+"); Const' (Sexpr (Number (Fraction (1, 1))));
-        Const' (Sexpr Nil)]);
-      Applic' (Var' (VarFree "apply"),
-       [Var' (VarFree "+"); Const' (Sexpr Nil)])])),
-  [Var' (VarFree "cons"); Var' (VarFree "apply")])]
