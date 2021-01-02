@@ -48,6 +48,42 @@ let find_off lst =
   | Sexpr(Symbol(_)) -> 9+siz
   ))))
   
+let tailed_call c = 
+Printf.sprintf "lea rax, [rax+3] ; return address of the last call
+    mov rbx, [rsp +8*rax]
+    cmp rbx, T_UNDEFINED
+    je tail_lab%d
+    push rbx ; push old return address
+    dec rax
+    mov rbp, [rsp + 8*rax] ; fixing the rbp
+    add rax, 3 ; old n
+    mov rax, [rsp + 8*rax]
+    add rax, 3 ;the offset to move
+    mov rbx, rsp
+    mov rcx, [rsp + 8*2] ;new n
+    add rcx, 3 ;the elements to move
+
+tail_the_stack%d:
+    cmp rcx, 0
+    je end_tail_loop%d
+    mov rdx, [rbx]
+    mov [rbx + 8*rax], rdx
+    dec rcx
+    add rbx, 8
+    jmp tail_the_stack%d
+end_tail_loop%d:
+    shl rax, 3
+    add rsp, rax ;;adjust the rsp
+    jmp rdx
+tail_lab%d:;; in case this was the outer call
+    call rdx
+    add rsp, 8*1
+    pop rbx
+    shl rbx, 3
+    add rsp, rbx
+    " c c c c c c
+
+
 let imp_macro n c= Printf.sprintf "mov rbx, [rsp + 8*3]
 cmp rbx, %d
 je e%dquals_
@@ -221,7 +257,13 @@ let rec gener consts fvars env e =
     | Def'(VarFree(v), e) -> (Printf.sprintf ";definee\n\n\t%s\n\t;move val to var in definee\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
     | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda simple\n\t%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
     | LambdaOpt'(slst ,s, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda opt\n%s\n\n\n\n\n\n%s" (lambdaenv c (env + 1)) (lambdaBodyopt  consts fvars body c (env + 1) (1+ (List.length slst))))
-    (* | ApplicTP'(proc, vars) ->  *)
+    | ApplicTP'(proc, vars) -> 
+    let c = !counter in let _ = (counter:=!counter+1) in
+      let proc = (gener consts fvars env proc) in let n = 
+        (List.length vars) in 
+        (Printf.sprintf
+        ";ApplicTP\n\t\t%s%s\n\tpush %d\n\tCLOSURE_ENV rsi, rax\n\tpush rsi\n\tCLOSURE_CODE rdx, rax\n\t%s"
+        (String.concat "" (List.map (fun v -> (Printf.sprintf "%s\n\tpush rax\n\t" (gener consts fvars env v))) (List.rev vars))) proc n (tailed_call c))
     | Box'(v) -> Printf.sprintf ";box\n\t%s\n\tMAKE_BOX rbx\n\tmov [rbx], rax\n\tmov rax, rbx" (gener consts fvars env (Var'(v)))
     | _ -> raise X_not_implemented_codeGen)
 
