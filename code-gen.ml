@@ -198,10 +198,10 @@ let rec gener consts fvars env e =
       ( let c = !counter in let _ = (counter:=!counter+1) in
       (Printf.sprintf "\n\t%s\n\tcmp byte[rax+1], 1\n\tje true%d\n\t%s\n\tjmp continue%d\n\ttrue%d:\n\t%s\n\tcontinue%d:"
         (gener consts fvars env tst) c  (gener consts fvars env els) c c (gener consts fvars env thn) c))
-    | Var'(VarParam(_, minor)) -> (Printf.sprintf ";varparam\n\tmov rax, qword[rbp + 8 * (4 + %d)]" minor) 
-    | Set'(VarParam(_, minor), ex) -> (Printf.sprintf ";set varparam\n\t%s\n\tmov qword[rbp + 8  * ( 4 + %d)], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env ex) minor)
-    | Var'(VarBound(_,major, minor)) -> (Printf.sprintf ";varbound\n\tmov rax, qword[rbp + 8 * 2]\n\tmov rax, qword[rax + 8 * %d]\n\tmov rax, qword[rax + 8 * %d]" major minor) 
-    | Set'(VarBound(_, major, minor), e) -> (let e = gener consts fvars env e in (Printf.sprintf ";set varbound\n\t%s \n\tmov rbx, qword[rbp +8 * 2]\n\tmov rbx, [rbx + 8*%d]\n\tmov qword[rbx + 8*%d], rax\n\t mov rax, SOB_VOID_ADDRESS" e major minor))
+    | Var'(VarParam(s, minor)) -> (Printf.sprintf ";varparam %s\n\tmov rax, qword[rbp + 8 * (4 + %d)]" s minor) 
+    | Set'(VarParam(s, minor), ex) -> (Printf.sprintf ";set varparam %s\n\t%s\n\tmov qword[rbp + 8  * ( 4 + %d)], rax\n\tmov rax, SOB_VOID_ADDRESS" s (gener consts fvars env ex) minor)
+    | Var'(VarBound(s,major, minor)) -> (Printf.sprintf ";varbound %s\n\tmov rax, qword[rbp + 8 * 2]\n\tmov rax, qword[rax + 8 * %d]\n\tmov rax, qword[rax + 8 * %d]" s major minor) 
+    | Set'(VarBound(s, major, minor), e) -> (let e = gener consts fvars env e in (Printf.sprintf ";set varbound %s\n\t%s \n\tmov rbx, qword[rbp +8 * 2]\n\tmov rbx, [rbx + 8*%d]\n\tmov qword[rbx + 8*%d], rax\n\t mov rax, SOB_VOID_ADDRESS" s e major minor))
     | Var'(VarFree(v)) -> Printf.sprintf ";varfree\n\tmov rax, qword[fvar_tbl + 8 * %d]" (List.assoc v fvars)
     | Set'(VarFree(v), e) -> (let e = gener consts fvars env e in Printf.sprintf ";set varfree\n\t%s\n\t mov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" e (List.assoc v fvars))
     (* todo: test it*)
@@ -209,7 +209,7 @@ let rec gener consts fvars env e =
     (* todo: test it*)
     | Or'(seq) -> let c = !counter in let _ = (counter:=!counter+1) in (generate_or consts fvars seq env c)
     | BoxGet'(v) -> (Printf.sprintf ";boxget\n\t%s\n\tmov rax, qword[rax]" (gener consts fvars env (Var'(v))))
-    | BoxSet'(v, e) -> (Printf.sprintf ";boxset\n\t%s\n\tpush rax\n\t%s\n\tpop qword[rax]\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e) (gener consts fvars env (Var'(v))))
+    | BoxSet'(v, e) -> (Printf.sprintf ";boxset\n\t%s\n\tpush rax\n\t%s\n\t;set the box\n\tpop qword[rax]\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e) (gener consts fvars env (Var'(v))))
     (* todo: test it*)
     | Applic'(proc, vars) -> let proc = (gener consts fvars env proc) in let n = 
         (List.length vars) in 
