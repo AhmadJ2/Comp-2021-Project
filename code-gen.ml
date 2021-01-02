@@ -221,7 +221,12 @@ let rec gener consts fvars env e =
     | Def'(VarFree(v), e) -> (Printf.sprintf ";definee\n\n\t%s\n\t;move val to var in definee\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
     | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda simple\n\t%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
     | LambdaOpt'(slst ,s, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda opt\n%s\n\n\n\n\n\n%s" (lambdaenv c (env + 1)) (lambdaBodyopt  consts fvars body c (env + 1) (1+ (List.length slst))))
-    (* | ApplicTP'(proc, vars) ->  *)
+    | ApplicTP'(proc, vars) -> 
+      let proc = (gener consts fvars env proc) in let n = 
+        (List.length vars) in 
+        (Printf.sprintf
+        ";ApplicTP\n\t\t%s%s\n\tpush %d\n\tCLOSURE_ENV rsi, rax\n\tpush rsi\n\tpush qword[rpb + 8*1]; old ret address\n\tCLOSURE_CODE rdx, rax\n\t;todo: fix the rbp pointer before jumping\n\tjmp rdx"
+        (String.concat "" (List.map (fun v -> (Printf.sprintf "%s\n\tpush rax\n\t" (gener consts fvars env v))) (List.rev vars))) proc n)
     | Box'(v) -> Printf.sprintf ";box\n\t%s\n\tMAKE_BOX rbx\n\tmov [rbx], rax\n\tmov rax, rbx" (gener consts fvars env (Var'(v)))
     | _ -> raise X_not_implemented_codeGen)
 
