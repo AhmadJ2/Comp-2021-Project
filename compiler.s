@@ -216,6 +216,10 @@
 		db %2
 		%%end
 %endmacro
+
+%macro MAKE_BOX 1
+	MALLOC %1, 8
+%endmacro
 ;;; Macros and routines for printing Scheme OBjects to STDOUT
 %define CHAR_NUL 0
 %define CHAR_TAB 9

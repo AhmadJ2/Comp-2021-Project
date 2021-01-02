@@ -209,7 +209,7 @@ module Prims : PRIMS = struct
 	 FLOAT_VAL rdi, rdi
 	 movq xmm1, rdi
    ucomisd xmm0, xmm1", "lt";
-   (* < *)
+   (* > *)
    return_boolean "jl",
    "DENOMINATOR rcx, rsi
 DENOMINATOR rdx, rdi
@@ -327,10 +327,51 @@ cmp rdi, rsi",
 	 jmp .loop	
        .end_loop:
 	 mov rdx, rax
-         MAKE_RATIONAL(rax, rdx, 1)", make_binary, "gcd";  
+         MAKE_RATIONAL(rax, rdx, 1)", make_binary, "gcd";
+
+         "CAR rax, rsi", make_unary,"car";
+         "CDR rax, rsi", make_unary, "cdr";
+         "MAKE_PAIR(rax, rsi, rdi)", make_binary, "cons"; 
+
+ "mov rax, rsi
+	mov rbx, [rsp + 8*3]
+	mov [rsp + 8*4], rbx
+	mov rbx, [rsp + 8*2]
+	mov [rsp + 8*3], rbx
+	mov rbx, [rsp + 8*1]
+	mov [rsp + 8*2], rbx
+	mov rbx, [rsp + 8*0]
+	mov [rsp + 8*1], rbx
+	add rsp, 8
+	sub qword[rsp +8*3], 1
+	CLOSURE_ENV rbx, rax
+	mov [rsp + 8*2], rbx
+	pop rbx
+	CLOSURE_CODE rbx, rax
+	jmp rbx
+         ", make_unary, "apply"; 
       ] in
     String.concat "\n\n" (List.map (fun (a, b, c) -> (b c a)) misc_parts);;
-
+(*
+INCASE I FUCK UP
+"mov rax, rsi
+	mov rbx, [rsp + 8*3]
+	mov [rsp + 8*4], rbx
+	mov rbx, [rsp + 8*2]
+	mov [rsp + 8*3], rbx
+	mov rbx, [rsp + 8*1]
+	mov [rsp + 8*2], rbx
+	mov rbx, [rsp + 8*0]
+	mov [rsp + 8*1], rbx
+	add rsp, 8
+	sub qword[rsp +8*3], 1
+	CLOSURE_ENV rbx, rax
+	mov [rsp + 8*2], rbx
+	pop rbx
+	CLOSURE_CODE rbx, rax
+	jmp rbx
+         ", make_unary, "apply"; 
+*)
   (* This is the interface of the module. It constructs a large x86 64-bit string using the routines
      defined above. The main compiler pipline code (in compiler.ml) calls into this module to get the
      string of primitive procedures. *)

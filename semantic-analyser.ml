@@ -59,8 +59,13 @@ module type SEMANTICS = sig
   val annotate_tail_calls : expr' -> expr'
   val box_set : expr' -> expr'
   val bx : string -> expr' list
+  val check_lower_levels : string -> int -> expr' -> int * int
+  val check_seq : string -> int -> expr' list -> int
+  val levels: string -> int -> expr' -> int
+  val chech_if_vars_need_to_box: string list-> int -> expr' -> expr'
+  val change_to_box_helper: string -> expr' -> expr'
+  val change_to_box: string -> int -> expr' -> expr'
 end;;
-
 module Semantics : SEMANTICS = struct
 
  (* struct Semantics *)
@@ -73,7 +78,7 @@ let rec lex env expr =  match expr with
       | If(test, thn , alt) -> If'(lex env test, lex env thn , lex env alt)
       | Seq(lst) -> Seq'(List.map (lex env) lst)
       | LambdaSimple(slst, expr) -> LambdaSimple'(slst, lex (slst::env) expr) 
-      | LambdaOpt(slst ,s, expr) -> LambdaOpt'(slst, s, lex (slst::env) expr)
+      | LambdaOpt(slst ,s, expr) -> LambdaOpt'(slst, s, lex ((slst@[s])::env) expr)
       | Def(Var(s), vl) -> Def'(VarFree(s), lex env vl)
       | Set(Var(vr),vl) -> Set'(check_vars env vr, lex env vl)
       | Var(v) -> Var'(check_vars env v)
@@ -160,12 +165,13 @@ let rec boxes exprs = match exprs with
 and chech_if_vars_need_to_box vars minor seq = 
     match vars with
         | v::rest -> (let change = levels v 0 seq in 
-              if change = 1 then 
-              (let seq = change_to_box v minor seq in 
-                    chech_if_vars_need_to_box rest (minor + 1) seq) 
+              if (change = 1) then  
+              (let seq' = chech_if_vars_need_to_box rest (minor + 1) seq
+              in change_to_box v minor seq'
+              )
               else 
                     chech_if_vars_need_to_box rest (minor + 1) seq
-              )
+        )
         | [] -> seq
 
 (* on the stack *)
@@ -195,7 +201,8 @@ and levels var f seq = match seq with
 
 and check_lower_levels var f exp = match exp with 
       | Var'(VarParam(v, _)) -> (f,0)
-      | Set'(VarParam(v, _), exp) -> if v=var then (let (read, write) = check_lower_levels var f exp in (read, if f>write then f else write)) else check_lower_levels var f exp
+      (* | BoxGet'(Var'(VarBound(_ ,_ , _)))-> (1, 0) *)
+      | Set'(VarParam(v, _), exp) -> if v=var then (let (read, write) = check_lower_levels var f exp in (read, 1)) else check_lower_levels var f exp
       | Var'(VarBound(v, _, _)) -> if v=var then (1, 0) else (0,0)
       | Set'(VarBound(v, _, _), exp) -> let (read, write) = check_lower_levels var f exp in (read, if v=var then 1 else write)
       | LambdaSimple'(vars, seq) -> if (check_if_in_there vars var) then (0,0) else (match seq with | Seq'(seq) -> do_inner_job var f seq | _ -> check_lower_levels var f seq)
@@ -203,7 +210,7 @@ and check_lower_levels var f exp = match exp with
       | Applic'(op, seq) -> do_inner_job var f (op::seq)
       | ApplicTP'(op, seq) -> do_inner_job var f (op::seq)
       | Or'(seq) -> do_inner_job var f seq
-
+      | If'(tst, thn, els) -> do_inner_job var f (tst::[thn]@[els])
       | _-> (0,0)
 
 and do_inner_job var f seq = let (lst) = List.map (check_lower_levels var f) seq in
@@ -219,15 +226,20 @@ and check_seq var f seq = let(seq_read_write) = List.map (check_lower_levels var
 
 and check_seq_app var f seq = let(seq_read_write) = List.map (levels var f) seq in if (List.exists (fun x-> x=1) seq_read_write) then 1 else 0
 
-and change_to_box var minor seq = let seq = match seq with | Seq'(seq) -> [Set'(VarParam(var, minor), Box'(VarParam(var, minor)))]@seq | _ -> [Set'(VarParam(var, minor), Box'(VarParam(var, minor)))]@[seq] in 
-            Seq'(List.map (change_to_box_helper var) seq)
+and change_to_box var minor seq = let seq = match seq with | Seq'(seq) -> seq | _ -> [seq] in 
+let kashal =
+      Seq'(List.map (change_to_box_helper var) seq)
+            in    match kashal with
+                  | Seq'(e)-> Seq'([Set'(VarParam(var, minor), Box'(VarParam(var, minor)))]@e)
+                  | _ -> raise X_invalid_expr
 
 and check_if_in_there vars var = List.exists (fun x-> x=var) vars
 
 and change_to_box_helper var exp  = match exp with
-      | Set'(VarParam(v, pos), exp) -> BoxSet'(VarParam(v, pos), change_to_box_helper var exp)
-      | Set'(VarBound(v, min, maj), exp) -> BoxSet'(VarBound(v, min, maj), change_to_box_helper var exp)
-      | Var'(v) ->  (match v with | VarParam(vr, m) -> if vr=var then BoxGet'(v) else exp
+      | Set'(VarParam(v, pos), exp) -> if (v = var) then BoxSet'(VarParam(v, pos), change_to_box_helper var exp) else Set'(VarParam(v, pos), change_to_box_helper var exp)
+      | Set'(VarBound(v, min, maj), exp) -> if (v=var) then BoxSet'(VarBound(v, min, maj), change_to_box_helper var exp) else Set'(VarBound(v, min, maj),change_to_box_helper var exp)
+      | BoxSet'(e, exp) -> BoxSet'(e ,change_to_box_helper var exp)
+      | Var'(v) ->  (match v with | VarParam(vr, m) -> if vr=var then BoxGet'(v) else  exp
                                   | VarBound(vr, min, maj) -> if vr=var then BoxGet'(v) else exp
                                   |_ -> exp)
       | Applic'(op, seq) -> Applic'(change_to_box_helper var op, List.map (change_to_box_helper var) seq)
@@ -251,3 +263,17 @@ let run_semantics expr =
        ;;
 
 end;;
+
+
+LambdaSimple' (["c"; "b"],
+
+ Seq'
+   [Set' (VarParam ("c", 0),
+      LambdaSimple' (["x"],
+            If' (Var' (VarParam ("x", 0)), Var' (VarParam ("x", 0)),
+                  Applic' (Var' (VarBound ("b", 0, 1)), [Const' (Sexpr (Bool true))]))));
+
+   Set' (VarParam ("b", 1), LambdaSimple' (["x"], Var' (VarParam ("x", 0))));
+
+   Applic' (Var' (VarParam ("c", 0)), [Const' (Sexpr (Bool false))]);
+   ])

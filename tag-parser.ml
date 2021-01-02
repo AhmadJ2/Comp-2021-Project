@@ -166,16 +166,6 @@ let rec flip lst = match lst with
           | first::rest -> (flip rest)@[first]
           | [] -> []
 
-let rec whatever_rec exps = match exps with
-          | Pair(Pair(s, exp), rest) -> Pair(Pair(s, Pair(String("whatever"), Nil)), whatever_rec rest)
-          | Nil -> Nil
-          | _ -> raise X_invalid_let_rec;;
-          
-let rec whatever_set exps body = match exps with 
-          | Pair(Pair(s, exp), rest) -> Pair(Pair(Symbol("set!"), Pair(s, exp)), (whatever_set rest body))
-          | Nil -> body
-          | _ -> raise X_invalid_let_rec;;
-
 let rec tag_parse e = match e with
       | Number(num) -> number_to_const e
       | Bool(b) -> Const(Sexpr(e))
@@ -261,6 +251,16 @@ and expand_let_rec exps_body = match exps_body with
           | Pair(exps, body) -> let whatever = whatever_rec exps in
                                 let whatever_set = whatever_set exps body in
                                 tag_parse (Pair(Symbol("let"), Pair(whatever, whatever_set)))
+          | _ -> raise X_invalid_let_rec
+
+and  whatever_rec exps = match exps with
+          | Pair(Pair(s, exp), rest) -> Pair(Pair(s, Pair(String("whatever"), Nil)), whatever_rec rest)
+          | Nil -> Nil
+          | _ -> raise X_invalid_let_rec
+          
+and  whatever_set exps body = match exps with 
+          | Pair(Pair(s, exp), rest) -> Pair(Pair(Symbol("set!"), Pair(s, exp)), (whatever_set rest body))
+          | Nil -> Pair( Pair(Symbol("let"), Pair(Nil, body)), Nil)
           | _ -> raise X_invalid_let_rec
                                         
 and zip paired_lists =
