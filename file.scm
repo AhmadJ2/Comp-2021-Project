@@ -1,7 +1,4 @@
 (define map
-  (let ((null? null?)
-	(car car) (cdr cdr)
-	(cons cons) (apply apply))
   (letrec ((map-many
 	    (lambda (f lists)
 	      (if (null? (car lists))
@@ -16,7 +13,7 @@
 		  (cons (f (car s))
 			(map-one f (cdr s)))))))
     (lambda (f . args)
-      (map-many f args)))))
+      (map-many f args))))
 
-(define id (lambda (x) x))
-(map id '(1))
+(map (lambda (x) x) 1 2 3 '(4))
+(apply + 1 2 3 4)

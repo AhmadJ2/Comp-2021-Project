@@ -201,7 +201,7 @@ let rec gener consts fvars env e =
     | Var'(VarParam(_, minor)) -> (Printf.sprintf "mov rax, qword[rbp + 8 * (4 + %d)]" minor) 
     | Set'(VarParam(_, minor), ex) -> (Printf.sprintf "%s\n\tmov qword[rbp + 8  * ( 4 + %d)], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env ex) minor)
     | Var'(VarBound(_,major, minor)) -> (Printf.sprintf "mov rax, qword[rbp + 8 * 2]\n\tmov rax, qword[rax + 8 * %d]\n\tmov rax, qword[rax + 8 * %d]" major minor) 
-    | Set'(VarBound(_, major, minor), e) -> (let e = gener consts fvars env e in (Printf.sprintf "%s \n\tmov rbx, qword[rbp +8 * 2]\n\tmov rbx, [rbx + 8*%d]\n\tmov qword[rbx + 9*%d], rax\n\t mov rax, SOB_VOID_ADDRESS" e major minor))
+    | Set'(VarBound(_, major, minor), e) -> (let e = gener consts fvars env e in (Printf.sprintf "%s \n\tmov rbx, qword[rbp +8 * 2]\n\tmov rbx, [rbx + 8*%d]\n\tmov qword[rbx + 8*%d], rax\n\t mov rax, SOB_VOID_ADDRESS" e major minor))
     | Var'(VarFree(v)) -> Printf.sprintf "mov rax, qword[fvar_tbl + 8 * %d]" (List.assoc v fvars)
     | Set'(VarFree(v), e) -> (let e = gener consts fvars env e in Printf.sprintf "%s\n\t mov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" e (List.assoc v fvars))
     (* todo: test it*)
@@ -209,14 +209,22 @@ let rec gener consts fvars env e =
     (* todo: test it*)
     | Or'(seq) -> let c = !counter in let _ = (counter:=!counter+1) in (generate_or consts fvars seq env c)
     | BoxGet'(v) -> (Printf.sprintf "%s\n\tmov rax, qword[rax]" (gener consts fvars env (Var'(v))))
-    | BoxSet'(v, e) -> (Printf.sprintf "%s\n\tpush rax, %s\n\tpop qword[rax]\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e) (gener consts fvars env (Var'(v))))
+    | BoxSet'(v, e) -> (Printf.sprintf "%s\n\tpush rax\n\t%s\n\tpop qword[rax]\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e) (gener consts fvars env (Var'(v))))
     (* todo: test it*)
-    | Applic'(proc, vars) -> let proc = (gener consts fvars env proc) in let n = (List.length vars) in (Printf.sprintf "\t%s%s\n\tpush %d\n\tCLOSURE_ENV rsi, rax\n\tpush rsi\n\tCLOSURE_CODE rdx, rax\n\tcall rdx\n\tadd rsp, 8*1\n\tpop rbx\n\tshl rbx, 3\n\tadd rsp, rbx" (String.concat "" (List.map (fun v -> (Printf.sprintf "%s\n\tpush rax\n\t" (gener consts fvars env v))) (List.rev vars))) proc n)
+    | Applic'(proc, vars) -> let proc = (gener consts fvars env proc) in let n = 
+(List.length vars) in 
+(Printf.sprintf
+"\t%s%s\n\tpush %d\n\tCLOSURE_ENV rsi, rax\n\tpush rsi\n\tCLOSURE_CODE rdx, rax\n\tcall rdx\n\tadd rsp, 8*1\n\tpop rbx\n\tshl rbx, 3\n\tadd rsp, rbx"
+(String.concat "" (List.map (fun v -> (Printf.sprintf "%s\n\tpush rax\n\t" (gener consts fvars env v))) (List.rev vars))) proc n)
+
+
+
     | Def'(VarFree(v), e) -> (Printf.sprintf "\n\t%s\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
     | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf "%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
     | LambdaOpt'(slst ,s, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda opt\n%s\n\n\n\n\n\n%s" (lambdaenv c (env + 1)) (lambdaBodyopt  consts fvars body c (env + 1) (1+ (List.length slst))))
     (* | ApplicTP'(proc, vars) ->  *)
-    | _ -> ""
+    | Box'(_)->"MAKE_BOX rax"
+    | _ -> raise X_not_implemented_codeGen
 
 and generate_or consts fvars seq env exit_label = Printf.sprintf "%scontinue%d:" (List.fold_left (fun acc x -> acc^(Printf.sprintf "%s\n\t cmp rax, SOB_FALSE_ADDRESS\n\t jne continue%d\n\t" (gener consts fvars env x) exit_label)) "" seq) exit_label
 
