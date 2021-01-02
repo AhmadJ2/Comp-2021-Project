@@ -218,8 +218,8 @@ let rec gener consts fvars env e =
         ";applic\n\t\t%s%s\n\tpush %d\n\tCLOSURE_ENV rsi, rax\n\tpush rsi\n\tCLOSURE_CODE rdx, rax\n\tcall rdx\n\tadd rsp, 8*1\n\tpop rbx\n\tshl rbx, 3\n\tadd rsp, rbx"
         (String.concat "" (List.map (fun v -> (Printf.sprintf "%s\n\tpush rax\n\t" (gener consts fvars env v))) (List.rev vars))) proc n)
 
-    | Def'(VarFree(v), e) -> (Printf.sprintf ";definee\n\n\t%s\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
-    | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf "%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
+    | Def'(VarFree(v), e) -> (Printf.sprintf ";definee\n\n\t%s\n\t;move val to var in definee\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
+    | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda simple\n\t%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
     | LambdaOpt'(slst ,s, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda opt\n%s\n\n\n\n\n\n%s" (lambdaenv c (env + 1)) (lambdaBodyopt  consts fvars body c (env + 1) (1+ (List.length slst))))
     (* | ApplicTP'(proc, vars) ->  *)
     | Box'(v) -> Printf.sprintf ";box\n\t%s\n\tMAKE_BOX rbx\n\tmov [rbx], rax\n\tmov rax, rbx" (gener consts fvars env (Var'(v)))

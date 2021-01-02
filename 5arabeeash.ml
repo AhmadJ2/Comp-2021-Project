@@ -46,3 +46,10 @@ Def' (VarFree "map",
       )),
    [Var' (VarFree "null?"); Var' (VarFree "car"); Var' (VarFree "cdr");
     Var' (VarFree "cons"); Var' (VarFree "apply")]))
+
+Applic' (Var' (VarFree "map"),
+  [Var' (VarFree "+");
+   Const'
+    (Sexpr
+      (Pair (Number (Fraction (1, 1)),
+        Pair (Number (Fraction (2, 1)), Pair (Number (Fraction (3, 1)), Nil)))))])
