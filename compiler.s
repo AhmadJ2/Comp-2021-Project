@@ -18,6 +18,20 @@
 %define GB(n) 1024*MB(n)
 ; %1 is where to place the char
 ; %2 what char to place
+
+%macro PAIR_LENGTH 0
+       mov rdx, 0
+       %%leap:
+       cmp rax, SOB_NIL_ADDRESS
+	   CAR rcx, rax
+       je %%endleap
+       inc rdx
+       CDR rax, rax
+       jmp %%leap
+       %%endleap:
+       mov rax, rdx
+%endmacro
+
 %macro pops 1
     mov rcx, %1
     %%start:
@@ -92,10 +106,9 @@
 %endmacro
 
 %define CLOSURE_ENV CAR
-
 %define CLOSURE_CODE CDR
 
-%define PVAR(n) qword [rbp+(4+n)*WORD_SIZE]
+%define PVAR(n) qword [rbp+(4+n)*WORD_SIZE] 
 
 ; returns %2 allocated bytes in register %1
 ; Supports using with %1 = %2

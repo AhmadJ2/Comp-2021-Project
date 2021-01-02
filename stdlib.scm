@@ -194,4 +194,4 @@
 		  (equal?-loop (car x) (car y)) (equal?-loop (cdr x) (cdr y)))
 		 ((and (string? x) (string? y)) (equal?-loop (string->list x) (string->list y)))
 		 (else (eq? x y))))))
-    equal?-loop)))
+    equal?-loop)))  
