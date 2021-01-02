@@ -189,11 +189,10 @@ module Prims : PRIMS = struct
 	 DENOMINATOR rcx, rsi
 	 DENOMINATOR rdx, rdi
 	 cmp rcx, rdx
-         .false:", (* rat_body *)
+         .false:",
         "FLOAT_VAL rsi, rsi
 	 FLOAT_VAL rdi, rdi
-   cmp rsi, rdi", (* flt_body *)
-    "eq"; (* name *)
+	 cmp rsi, rdi", "eq";
 
         (* < *)
         return_boolean "jl",
@@ -208,21 +207,21 @@ module Prims : PRIMS = struct
 	 movq xmm0, rsi
 	 FLOAT_VAL rdi, rdi
 	 movq xmm1, rdi
-   ucomisd xmm0, xmm1", "lt";
+	 ucomisd xmm0, xmm1", "lt";
    (* > *)
-   return_boolean "jl",
-   "DENOMINATOR rcx, rsi
-DENOMINATOR rdx, rdi
-NUMERATOR rsi, rsi
-NUMERATOR rdi, rdi
-imul rsi, rdx
-imul rdi, rcx
-cmp rdi, rsi",
-   "FLOAT_VAL rsi, rsi
-\tFLOAT_VAL rdi, rdi
-\tmovq xmm0, rdi
-\tmovq xmm1, rsi
-\tucomisd xmm0, xmm1", "gr";
+   return_boolean "jg",
+        "DENOMINATOR rcx, rsi
+	 DENOMINATOR rdx, rdi
+	 NUMERATOR rsi, rsi
+	 NUMERATOR rdi, rdi
+	 imul rsi, rdx
+	 imul rdi, rcx
+	 cmp rsi, rdi",
+        "FLOAT_VAL rsi, rsi
+	 movq xmm0, rsi
+	 FLOAT_VAL rdi, rdi
+	 movq xmm1, rdi
+	 ucomisd xmm0, xmm1", "gr";
       ] in
     let comparator comp_wrapper name flt_body rat_body = numeric_op name flt_body rat_body comp_wrapper in
     (String.concat "\n\n" (List.map (fun (a, b, c) -> arith c b a (fun x -> x)) arith_map)) ^
@@ -333,45 +332,90 @@ cmp rdi, rsi",
          "CDR rax, rsi", make_unary, "cdr";
          "MAKE_PAIR(rax, rsi, rdi)", make_binary, "cons"; 
 
- "mov rax, rsi
-	mov rbx, [rsp + 8*3]
-	mov [rsp + 8*4], rbx
-	mov rbx, [rsp + 8*2]
-	mov [rsp + 8*3], rbx
-	mov rbx, [rsp + 8*1]
-	mov [rsp + 8*2], rbx
-	mov rbx, [rsp + 8*0]
-	mov [rsp + 8*1], rbx
-	add rsp, 8
-	sub qword[rsp +8*3], 1
-	CLOSURE_ENV rbx, rax
-	mov [rsp + 8*2], rbx
-	pop rbx
-	CLOSURE_CODE rbx, rax
-	jmp rbx
+ "mov rbx, [rsp + 8 * 3]
+ mov rax, PVAR((rbx - 1)); k
+ PAIR_LENGTH   ;rax is the length
+ mov rbx, [rsp + 8 * 3] ;n
+ 
+ ;; RCX IS HOW MANY ELEMENTS TO DRAG DOWN
+ ;; RAX-1 IS HOW MANY ELEMTS TO SKIP DOWN
+ ;; RBX IS THE NUMBER OF PARAMS (LIST + PARAMS + FUNCTION)
+ cmp rax, 0
+ je .equals
+ .notequals:
+ .dealwithrest:
+ lea rcx, [rax-1]
+ mov rdx, 0
+ lea rsi, [rbx + 3] 
+ .restloop:
+ cmp rsi, 0
+ je .dealwithlist
+ mov rax, [rsp + 8 * (rdx)]
+ mov rbx, rdx
+ sub rbx, rcx
+ mov [rsp + 8 * (rbx)], rax
+ inc rdx
+ dec rsi
+ jmp .restloop
+
+ .dealwithlist:
+ lea rax, [8* rcx]
+ sub rsp, rax
+
+ mov rax, [rsp + 8 * 3]
+ lea rbx, [rsp+8*(3+rax)]
+ add rax, rcx
+ mov [rsp + 8 * 3], rax
+ mov rax, [rsp + 8 * (3 + rax)]  ;;RAX WILL ALWAYS POINT AT THE CURRENT PAIR
+
+
+
+ .listloop:
+ cmp rax, SOB_NIL_ADDRESS
+ je .callthefunc
+ CAR rcx, rax
+ CDR rax, rax
+ mov [rbx], rcx
+ add rbx, 8
+ jmp .listloop
+
+ 
+ 
+ .equals:
+ mov rbx, [rsp + 8 * 3]
+ add rbx, 2
+ .eloop:
+        mov rcx ,[rsp + 8 *(rbx)]
+        mov [rsp + 8 *(rbx+1)], rcx
+        cmp rbx, 0
+        je .eend
+        dec rbx
+        jmp .eloop
+ .eend:
+ pop rbx
+ sub qword [rsp + 8 * 3], 1
+ 
+ .callthefunc:
+  mov rax, [rsp + 8 * 4]
+   mov rbx, [rsp + 8*3]
+   mov [rsp + 8*4], rbx
+   mov rbx, [rsp + 8*2]
+   mov [rsp + 8*3], rbx
+   mov rbx, [rsp + 8*1]
+   mov [rsp + 8*2], rbx
+   mov rbx, [rsp + 8*0]
+   mov [rsp + 8*1], rbx
+   add rsp, 8
+   sub qword[rsp +8*3], 1
+   CLOSURE_ENV rbx, rax
+   mov [rsp + 8*2], rbx
+   pop rbx
+   CLOSURE_CODE rbx, rax
+   jmp rbx
          ", make_unary, "apply"; 
       ] in
     String.concat "\n\n" (List.map (fun (a, b, c) -> (b c a)) misc_parts);;
-(*
-INCASE I FUCK UP
-"mov rax, rsi
-	mov rbx, [rsp + 8*3]
-	mov [rsp + 8*4], rbx
-	mov rbx, [rsp + 8*2]
-	mov [rsp + 8*3], rbx
-	mov rbx, [rsp + 8*1]
-	mov [rsp + 8*2], rbx
-	mov rbx, [rsp + 8*0]
-	mov [rsp + 8*1], rbx
-	add rsp, 8
-	sub qword[rsp +8*3], 1
-	CLOSURE_ENV rbx, rax
-	mov [rsp + 8*2], rbx
-	pop rbx
-	CLOSURE_CODE rbx, rax
-	jmp rbx
-         ", make_unary, "apply"; 
-*)
+
   (* This is the interface of the module. It constructs a large x86 64-bit string using the routines
      defined above. The main compiler pipline code (in compiler.ml) calls into this module to get the
      string of primitive procedures. *)
