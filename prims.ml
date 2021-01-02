@@ -337,50 +337,45 @@ module Prims : PRIMS = struct
  PAIR_LENGTH   ;rax is the length
  mov rbx, [rsp + 8 * 3] ;n
  
- ;; RCX IS HOW MANY ELEMENTS TO DRAG DOWN
- ;; RAX-1 IS HOW MANY ELEMTS TO SKIP DOWN
- ;; RBX IS THE NUMBER OF PARAMS (LIST + PARAMS + FUNCTION)
  cmp rax, 0
  je .equals
  .notequals:
  .dealwithrest:
- lea rcx, [rax-1]
- mov rdx, 0
- lea rsi, [rbx + 3] 
- .restloop:
- cmp rsi, 0
- je .dealwithlist
- mov rax, [rsp + 8 * (rdx)]
- mov rbx, rdx
- sub rbx, rcx
- mov [rsp + 8 * (rbx)], rax
- inc rdx
- dec rsi
- jmp .restloop
+    lea rcx, [rax-1]
+    mov rdx, 0
+    lea rsi, [rbx + 3] 
+    .restloop:
+    cmp rsi, 0
+    je .dealwithlist
+    mov rax, [rsp + 8 * (rdx)]
+    mov rbx, rdx
+    sub rbx, rcx
+    mov [rsp + 8 * (rbx)], rax
+    inc rdx
+    dec rsi
+    jmp .restloop
 
  .dealwithlist:
- lea rax, [8* rcx]
- sub rsp, rax
+    lea rax, [8* rcx]
+    sub rsp, rax
 
- mov rax, [rsp + 8 * 3]
- lea rbx, [rsp+8*(3+rax)]
- add rax, rcx
- mov [rsp + 8 * 3], rax
- mov rax, [rsp + 8 * (3 + rax)]  ;;RAX WILL ALWAYS POINT AT THE CURRENT PAIR
+    mov rax, [rsp + 8 * 3]
+    lea rbx, [rsp+8*(3+rax)]
+    add rax, rcx
+    mov [rsp + 8 * 3], rax
+    mov rax, [rsp + 8 * (3 + rax)]  ;;RAX WILL ALWAYS POINT AT THE CURRENT PAIR
 
 
 
  .listloop:
- cmp rax, SOB_NIL_ADDRESS
- je .callthefunc
- CAR rcx, rax
- CDR rax, rax
- mov [rbx], rcx
- add rbx, 8
- jmp .listloop
+    cmp rax, SOB_NIL_ADDRESS
+    je .callthefunc
+    CAR rcx, rax
+    CDR rax, rax
+    mov [rbx], rcx
+    add rbx, 8
+    jmp .listloop
 
- 
- 
  .equals:
  mov rbx, [rsp + 8 * 3]
  add rbx, 2
@@ -396,22 +391,22 @@ module Prims : PRIMS = struct
  sub qword [rsp + 8 * 3], 1
  
  .callthefunc:
-  mov rax, [rsp + 8 * 4]
-   mov rbx, [rsp + 8*3]
-   mov [rsp + 8*4], rbx
-   mov rbx, [rsp + 8*2]
-   mov [rsp + 8*3], rbx
-   mov rbx, [rsp + 8*1]
-   mov [rsp + 8*2], rbx
-   mov rbx, [rsp + 8*0]
-   mov [rsp + 8*1], rbx
-   add rsp, 8
-   sub qword[rsp +8*3], 1
-   CLOSURE_ENV rbx, rax
-   mov [rsp + 8*2], rbx
-   pop rbx
-   CLOSURE_CODE rbx, rax
-   jmp rbx
+    mov rax, [rsp + 8 * 4]
+    mov rbx, [rsp + 8*3]
+    mov [rsp + 8*4], rbx
+    mov rbx, [rsp + 8*2]
+    mov [rsp + 8*3], rbx
+    mov rbx, [rsp + 8*1]
+    mov [rsp + 8*2], rbx
+    mov rbx, [rsp + 8*0]
+    mov [rsp + 8*1], rbx
+    add rsp, 8
+    sub qword[rsp +8*3], 1
+    CLOSURE_ENV rbx, rax
+    mov [rsp + 8*2], rbx
+    pop rbx
+    CLOSURE_CODE rbx, rax
+    jmp rbx
          ", make_unary, "apply"; 
       ] in
     String.concat "\n\n" (List.map (fun (a, b, c) -> (b c a)) misc_parts);;

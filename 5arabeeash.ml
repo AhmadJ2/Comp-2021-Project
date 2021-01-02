@@ -1,15 +1,65 @@
-("map", 0);
- ("map-list", 1);
-  ("args", 2); 
-  ("null?", 3); 
-  ("car", 4);
- ("cdr", 5); ("cons", 6); ("apply", 7); ("fold-left", 8); ("fold-right", 9);
- ("cons**", 10); ("cons*", 11); ("lst", 12); ("append", 13); ("list", 14);
- ("x", 15); ("list?", 16); ("pair?", 17); ("make-string", 18); ("y", 19);
- ("not", 20); ("+", 21); ("*", 22); ("/", 23); ("numerator", 24);
- ("denominator", 25); ("gcd", 26); ("=", 27); ("<", 28); ("ys", 29);
- ("flonum?", 30); ("rational?", 31); ("exact->inexact", 32); ("-", 33);
- (">", 34); ("zero?", 35); ("integer?", 36); ("number?", 37); ("length", 38);
- ("string->list", 39); ("string-ref", 40); ("string-length", 41);
- ("equal?", 42); ("char?", 43); ("string?", 44); ("eq?", 45);
- ("char->integer", 46)
+Def' (VarFree "map",
+  Applic'
+   (LambdaSimple' (["null?"; "car"; "cdr"; "cons"; "apply"],
+     Applic'
+
+      (LambdaSimple' (["map-many"; "map-one"],
+        Seq'
+         [Set' (VarParam ("map-many", 0), Box' (VarParam ("map-many", 0)));
+          Set' (VarParam ("map-one", 1), Box' (VarParam ("map-one", 1)));
+          
+          BoxSet' (VarParam ("map-many", 0),
+           LambdaSimple' (["f"; "lists"],
+            If'
+             (Applic' (Var' (VarBound ("null?", 1, 0)),
+               [Applic' (Var' (VarBound ("car", 1, 1)),
+                 [Var' (VarParam ("lists", 1))])]),
+             Const' (Sexpr Nil),
+             Applic' (Var' (VarBound ("cons", 1, 3)),
+              [Applic' (Var' (VarBound ("apply", 1, 4)),
+                [Var' (VarParam ("f", 0));
+                 Applic' (BoxGet' (VarBound ("map-one", 0, 1)),
+                  [Var' (VarBound ("car", 1, 1)); Var' (VarParam ("lists", 1))])]);
+               Applic' (BoxGet' (VarBound ("map-many", 0, 0)),
+                [Var' (VarParam ("f", 0));
+                 Applic' (BoxGet' (VarBound ("map-one", 0, 1)),
+                  [Var' (VarBound ("cdr", 1, 2)); Var' (VarParam ("lists", 1))])])]))));
+          BoxSet' (VarParam ("map-one", 1),
+           LambdaSimple' (["f"; "s"],
+            If'
+             (Applic' (Var' (VarBound ("null?", 1, 0)),
+               [Var' (VarParam ("s", 1))]),
+             Const' (Sexpr Nil),
+             Applic' (Var' (VarBound ("cons", 1, 3)),
+              [Applic' (Var' (VarParam ("f", 0)),
+                [Applic' (Var' (VarBound ("car", 1, 1)),
+                  [Var' (VarParam ("s", 1))])]);
+               Applic' (BoxGet' (VarBound ("map-one", 0, 1)),
+                [Var' (VarParam ("f", 0));
+                 Applic' (Var' (VarBound ("cdr", 1, 2)),
+                  [Var' (VarParam ("s", 1))])])]))));
+          Applic'
+           (LambdaSimple' ([],
+             LambdaOpt' (["f"], "args",
+              Applic' (BoxGet' (VarBound ("map-many", 1, 0)),
+               [Var' (VarParam ("f", 0)); Var' (VarParam ("args", 1))]))),
+           [])]),
+
+      [Const' (Sexpr (String "whatever")); Const' (Sexpr (String "whatever"))]
+      )),
+
+   [Var' (VarFree "null?"); Var' (VarFree "car"); Var' (VarFree "cdr");
+    Var' (VarFree "cons"); Var' (VarFree "apply")]))
+
+
+
+
+    Applic'
+  (LambdaSimple' (["consf"; "applyf"],
+    Applic' (Var' (VarFree "cons"),
+     [Applic' (Var' (VarFree "apply"),
+       [Var' (VarFree "+"); Const' (Sexpr (Number (Fraction (1, 1))));
+        Const' (Sexpr Nil)]);
+      Applic' (Var' (VarFree "apply"),
+       [Var' (VarFree "+"); Const' (Sexpr Nil)])])),
+  [Var' (VarFree "cons"); Var' (VarFree "apply")])]
