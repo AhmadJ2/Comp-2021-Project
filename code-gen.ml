@@ -50,6 +50,17 @@ let find_off lst =
   
 let tailed_call c = 
 Printf.sprintf "
+  push rax
+	push rbx
+	push rcx
+	push rdx
+	mov rax, rdx
+	call write_sob_if_not_void ;; this should print closure
+	pop rdx
+	pop rcx
+	pop rbx
+	pop rax
+
     mov rbx, [rbp +8*1] ; old ret
     cmp rbx, T_UNDEFINED
     je tail_lab%d
@@ -72,6 +83,17 @@ end_tail_loop%d:
     mov rbp, [rbp]
     add rax, 8
     mov rsp, rax
+
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    call write_sob_if_not_void ;; this should print closure
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
+    
     jmp rdx
 tail_lab%d: ; in case this was the outer call
 
