@@ -49,33 +49,30 @@ let find_off lst =
   ))))
   
 let tailed_call c = 
-Printf.sprintf "lea rax, [rax+3] ; return address of the last call
-    mov rbx, [rsp +8*rax]
+Printf.sprintf "
+    mov rbx, [rbp +8*1] ; old ret
     cmp rbx, T_UNDEFINED
     je tail_lab%d
     push rbx ; push old return address
-    dec rax
-    mov rbp, [rsp + 8*rax] ; fixing the rbp
-    add rax, 3 ; old n
-    mov rax, [rsp + 8*rax]
-    add rax, 3 ;the offset to move
-    mov rbx, rsp
-    mov rcx, [rsp + 8*2] ;new n
-    add rcx, 3 ;the elements to move
-
+    mov rax, [rbp]
+    sub rax, 8
+    mov rbx, rbp
+    
 tail_the_stack%d:
-    cmp rcx, 0
-    je end_tail_loop%d
-    mov rdx, [rbx]
-    mov [rbx + 8*rax], rdx
-    dec rcx
-    add rbx, 8
-    jmp tail_the_stack%d
+       cmp rbx, rsp
+       je end_tail_loop%d
+       mov rcx, [rbx]
+       mov [rax], rcx
+       sub rax, 8
+       sub rbx, 8
+       jmp tail_the_stack%d
+       
 end_tail_loop%d:
-    shl rax, 3
-    add rsp, rax ;;adjust the rsp
-    jmp rdx
-tail_lab%d:;; in case this was the outer call
+       mov rsp, rax
+       add rsp, 8
+       jmp rdx
+tail_lab%d: ; in case this was the outer call
+
     call rdx
     add rsp, 8*1
     pop rbx
@@ -89,7 +86,6 @@ cmp rbx, %d
 je e%dquals_
 cmp rbx, %d
 jl l%desser_
-
 R%dgreaters_:
 lea rcx, [rbx - %d] ;; difference, length of the list
 lea rdx, [rsp + 8*(3+rbx)]
@@ -107,8 +103,6 @@ pop rbx
 sub rdx, 8
 dec rcx
 jmp g%dreatloop_
-
-
 g%dreatend_:
 mov [rsp + 8*(3+rbx)], rax
 lea rax, [rsp+8*(2+rbx)]
@@ -125,7 +119,6 @@ lea rbx ,[8*rcx]
 add rsp, rbx
 sub [rsp + 8* 3], rcx
 jmp e%dnd_opt_
-
 l%desser_:
 lea rax, [4+rbx]
 mov rcx, 0
@@ -286,4 +279,3 @@ module Code_Gen : CODE_GEN = struct
   
   let generate consts fvars e = gener consts fvars 0 e;;
 end;;
-
