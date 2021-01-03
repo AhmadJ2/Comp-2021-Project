@@ -1,3 +1,4 @@
-"aasd"
-(define x "aasd")
-(define y "aasd")
+(+ 1 2)
+(fold-left (lambda (x y) (+ x y)) 0 '(1 2))
+
+
