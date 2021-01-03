@@ -72,6 +72,7 @@ end_tail_loop%d:
        add rsp, 8
        jmp rdx
 tail_lab%d: ; in case this was the outer call
+
     call rdx
     add rsp, 8*1
     pop rbx
