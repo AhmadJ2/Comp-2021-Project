@@ -129,7 +129,7 @@ try
                               (Reader.read_sexprs s)) in
 
   (* get the filename to compile from the command line args *)
-  let infile = "file.scm"
+  let infile = Sys.argv.(1)
     (* Sys.argv.(1) *)
      in  
 
