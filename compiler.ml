@@ -129,7 +129,7 @@ try
                               (Reader.read_sexprs s)) in
 
   (* get the filename to compile from the command line args *)
-  let infile = "file.scm"
+  let infile = Sys.argv.(1)
     (* Sys.argv.(1) *)
      in  
 
@@ -137,8 +137,8 @@ try
   let code = (file_to_string "stdlib.scm") ^
     (file_to_string infile) 
     
-
     in
+    
 
   (* generate asts for all the code *)
   let asts = string_to_asts code in
@@ -162,6 +162,7 @@ try
                   code_fragment
                     ^ clean_exit ^
                     "\n" ^ Prims.procs)
+
 
 (* raise an exception if the input file isn't found *)
 with Invalid_argument(x) -> raise X_missing_input_file;;
