@@ -50,26 +50,22 @@ let find_off lst =
   
 let tailed_call c = 
 Printf.sprintf "
-  push rax
-	push rbx
-	push rcx
-	push rdx
-	mov rax, rdx
-	call write_sob_if_not_void ;; this should print closure
-	pop rdx
-	pop rcx
-	pop rbx
-	pop rax
-
     mov rbx, [rbp +8*1] ; old ret
     cmp rbx, T_UNDEFINED
     je tail_lab%d
+    mov rsi, [rbp]
     push rbx ; push old return address
-    mov rax, [rbp]
-    sub rax, 8
-    mov rbx, rbp
-    sub rbx, 8
-    
+    mov rax, rsp
+    mov rbx, rsp
+    mov rcx, [rsp + 8 * 2]
+    add rcx, 2
+    shl rcx, 3
+    add rbx, rcx
+    shr rcx, 3
+    add rcx, [rsp + 8*(4 + rcx)]
+    add rcx, 4
+    shl rcx, 3
+    add rax, rcx
 tail_the_stack%d:
     mov rcx, [rbx]
     mov [rax], rcx
@@ -80,23 +76,12 @@ tail_the_stack%d:
     jmp tail_the_stack%d
        
 end_tail_loop%d:
-    mov rbp, [rbp]
+    mov rbp, rsi
     add rax, 8
     mov rsp, rax
-
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    call write_sob_if_not_void ;; this should print closure
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
     
     jmp rdx
 tail_lab%d: ; in case this was the outer call
-
     call rdx
     add rsp, 8*1
     pop rbx
@@ -274,6 +259,7 @@ let rec gener consts fvars env e =
     | Def'(VarFree(v), e) -> (Printf.sprintf ";definee\n\n\t%s\n\t;move val to var in definee\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
     | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda simple\n\t%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
     | LambdaOpt'(slst ,s, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda opt\n%s\n\n\n\n\n\n%s" (lambdaenv c (env + 1)) (lambdaBodyopt  consts fvars body c (env + 1) (1+ (List.length slst))))
+    (* | ApplicTP' (proc, vars) -> gener consts fvars env (Applic'(proc, vars)) *)
     | ApplicTP'(proc, vars) -> 
     let c = !counter in let _ = (counter:=!counter+1) in
       let proc = (gener consts fvars env proc) in let n = 
