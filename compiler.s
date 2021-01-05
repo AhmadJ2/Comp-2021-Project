@@ -23,6 +23,8 @@
 	push rbx
 	push rcx
 	push rdx
+	push rsi
+	push rdi
 %endmacro
 %macro debug 1
 	pushad
@@ -31,7 +33,15 @@
 	call write_sob_if_not_void
 	popad
 %endmacro
+%macro debugs 1
+	pushad
+	mov rax, %1
+	call write_sob_if_not_void
+	popad
+%endmacro
 %macro popad 0
+	pop rdi
+	pop rsi
 	pop rdx
 	pop rcx
 	pop rbx
