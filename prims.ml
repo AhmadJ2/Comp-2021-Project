@@ -148,19 +148,63 @@ module Prims : PRIMS = struct
         "MAKE_RATIONAL(rax, rdx, rdi) 
          mov PVAR(1), rax
          pop rbp
-         jmp mul", (* rat_op *)
+         jmp mul
+         ", (* rat_op *)
           "divsd", (* flt_op *)
            "div"; (* name *)
         
-        "imul rsi, rdi
-        imul rcx, rdx", 
+        "imul rsi, rdi	;;RSI=NUMERATOR(PVAR(0)), RDI=NUMENRATOR(PVAR(1)),RCX=DENOMERATOR(PVAR(0)), RDX=DENOMERATOR(PVAR(1)), 
+        imul rcx, rdx
+		MAKE_RATIONAL(rax, rsi, 1 )
+		push rax
+		MAKE_RATIONAL(rax, rcx, 1)
+		push rax
+		push 2
+		push T_UNDEFINED
+		call gcd
+    add rsp, 16
+	pop rcx
+	pop rsi
+	mov rbx, rax
+    NUMERATOR rsi, rsi
+	NUMERATOR rcx, rcx
+    NUMERATOR rax, rax
+		;debug rax
+		;debug rsi
+		xor rdx, rdx
+		push rax
+		mov rax, rsi
+		pop rsi
+    div rsi
+    ;debug rax
+    ;debug rsi
+		push rax
+		mov rax, rcx
+		xor rdx, rdx
+    div rsi 
+    ;debug rax
+    ;debug rsi
+    ;debug rcx
+		pop rsi
+		mov rcx, rax", 
         "mulsd",
           "mul";
         
         "imul rsi, rdx
         imul rdi, rcx
         add rsi, rdi
-        imul rcx, rdx", 
+        imul rcx, rdx
+        MAKE_RATIONAL(rax, rsi, rcx)
+        push rax
+        MAKE_RATIONAL(rax, 1, 1)
+        push rax
+        push 2
+        push T_UNDEFINED
+        call mul
+        add rsp, 32
+        NUMERATOR rsi, rax
+		    DENOMINATOR rdi, rax
+        ", 
         "addsd", 
         "add";
       ] in

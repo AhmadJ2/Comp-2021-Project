@@ -1,3 +1,6 @@
+(< 1.0 2.0)
+(< 2.0 1.0)
+
 (define map
   (let ((null? null?)
 	(car car) (cdr cdr)
@@ -23,7 +26,7 @@
    (if (null? seq) 
        init 
        (fold-left f 
-                  (f (car seq) init) 
+                  (f init (car seq)) 
                   (cdr seq)))) 
 (define (fold-right f init seq) 
    (if (null? seq) 
@@ -75,12 +78,14 @@
       (if (null? y)
 	  (make-string x #\nul)
 	  (make-string x (car y))))))
+;(/ ( / (numerator 10/6) 2) (/ (denominator 10/6) 2))
 
+(< 2.0 1.0)
+(< 1.0 2.0)
 (define not
   (lambda (x) (if x #f #t)))
-
 (let ((flonum? flonum?) (rational? rational?)
-      (exact->inexact exact->inexact)
+      (exact->inexact exact->inexact) 
       (fold-left fold-left) (map map)
       (_+ +) (_* *) (_/ /) (_= =) (_< <)
       (car car) (cdr cdr) (null? null?))
@@ -99,7 +104,7 @@
 		   (_/ (_/ (numerator x) n) (_/ (denominator x) n)))))))
       (set! + (lambda x (normalize (fold-left (^numeric-op-dispatcher _+) 0 x))))
       (set! * (lambda x (normalize (fold-left (^numeric-op-dispatcher _*) 1 x))))
-      (set! / (let ((/ (^numeric-op-dispatcher _/)))
+      (set! / (let ((/ (^numeric-op-dispatcher /)))
 		(lambda (x . y)
 		  (if (null? y)
 		      (/ 1 x)
@@ -111,6 +116,7 @@
 			 (map (lambda (y) (op x y)) ys))))))
       (set! = (^comparator (^numeric-op-dispatcher _=)))
       (set! < (^comparator (^numeric-op-dispatcher _<))))))
+
 
 (define -
   (let ((apply apply)
@@ -197,13 +203,7 @@
 		 (else (eq? x y))))))
     equal?-loop)))
 
-
-(define (fold-left f init seq) 
-   (if (null? seq) 
-       init 
-       (fold-left f 
-                  (f (car seq) init) 
-                  (cdr seq)))) 
-
+(< 2.0 1)
+(< 1 2.0)
 
 
