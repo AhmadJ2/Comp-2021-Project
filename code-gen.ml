@@ -150,7 +150,11 @@ mov rcx, [rsp + 8*(3+rbx)]
 MAKE_PAIR(rax, rcx, SOB_NIL_ADDRESS)
 mov [rsp + 8*(3+rbx)], rax
 e%dnd_opt_:" n c n c c n c c c c n c c n c c c c c c c c c 
-  
+let string_of_float_ flt =
+    let str = string_of_float flt in
+      let ch = String.get str ((String.length str) -1)  in
+        if (ch = '.') then (str^"0") else str
+        
 let rec mct acc exp = 
     match exp with 
     | Const'(Void) -> if (false = List.exists (fun (con, (inte, str)) -> str = "db T_VOID") acc) then (acc@[(Void,((find_off acc), "db T_VOID"))]) else (acc)
@@ -160,7 +164,7 @@ let rec mct acc exp =
         | Bool(bo) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Bool(bo)))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_SINGLE_LIT T_BOOL ,"^(if (bo) then ("1") else ("0"))))]) else (acc)
         | Char(ch) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Char(ch)))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_SINGLE_LIT T_CHAR ,"^string_of_int (int_of_char ch)))]) else (acc)
         | Number(Fraction(num, den)) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Number(Fraction(num, den))))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_RATIONAL("^(string_of_int num)^", "^ (string_of_int den)^")"))]) else (acc)
-        | Number(Float(flo)) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Number(Float(flo))))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_FLOAT "^(string_of_float flo)^" "))]) else (acc)
+        | Number(Float(flo)) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Number(Float(flo))))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_FLOAT "^(string_of_float_ flo)^" "))]) else (acc)
         | Nil -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Nil))) acc) then (acc@[(Sexpr(e),((find_off acc), "db T_NIL"))]) else (acc)
         | Pair(car, cdr) -> let dis = (mct (mct acc (Const'(Sexpr(car)))) (Const'(Sexpr(cdr)))) in 
           (if (false = (List.exists (fun (con, (inte, str)) -> (con = (Sexpr(Pair(car, cdr))))) (dis))) then 
