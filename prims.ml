@@ -237,7 +237,10 @@ module Prims : PRIMS = struct
         "FLOAT_VAL rsi, rsi
 	 FLOAT_VAL rdi, rdi
    cmp rsi, rdi", "eq";
-   return_boolean "jl",
+   
+
+        (* < *)
+      return_boolean "jl",
         "DENOMINATOR rcx, rsi
 	 DENOMINATOR rdx, rdi
 	 NUMERATOR rsi, rsi
@@ -252,9 +255,6 @@ module Prims : PRIMS = struct
 	 cmpltpd xmm0, xmm1
 	 movq rsi, xmm0
 	 cmp rsi, 0", "lt";
-
-        (* < *)
-       
 
       ] in
     let comparator comp_wrapper name flt_body rat_body = numeric_op name flt_body rat_body comp_wrapper in
