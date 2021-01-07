@@ -1,6 +1,3 @@
-(< 1.0 2.0)
-(< 2.0 1.0)
-
 (define map
   (let ((null? null?)
 	(car car) (cdr cdr)
@@ -202,8 +199,3 @@
 		 ((and (string? x) (string? y)) (equal?-loop (string->list x) (string->list y)))
 		 (else (eq? x y))))))
     equal?-loop)))
-
-
-
-
-
