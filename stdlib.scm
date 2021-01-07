@@ -75,16 +75,13 @@
       (if (null? y)
 	  (make-string x #\nul)
 	  (make-string x (car y))))))
-;(/ ( / (numerator 10/6) 2) (/ (denominator 10/6) 2))
 
-(< 2.0 1.0)
-(< 1.0 2.0)
 (define not
   (lambda (x) (if x #f #t)))
 (let ((flonum? flonum?) (rational? rational?)
       (exact->inexact exact->inexact) 
       (fold-left fold-left) (map map)
-      (_+ +) (_* *) (_/ /) (_= =) (_< <)
+      (+ +) (* *) (/ /) (= =) (_< <)
       (car car) (cdr cdr) (null? null?))
   (let ((^numeric-op-dispatcher
 	 (lambda (op)
@@ -98,7 +95,7 @@
 	     (if (flonum? x)
 		 x
 		 (let ((n (gcd (numerator x) (denominator x))))
-		   (_/ (_/ (numerator x) n) (_/ (denominator x) n)))))))
+		   (/ (/ (numerator x) n) (_/ (denominator x) n)))))))
       (set! + (lambda x (normalize (fold-left (^numeric-op-dispatcher _+) 0 x))))
       (set! * (lambda x (normalize (fold-left (^numeric-op-dispatcher _*) 1 x))))
       (set! / (let ((/ (^numeric-op-dispatcher /)))
@@ -195,7 +192,7 @@
 		 ((and (flonum? x) (flonum? y)) (= x y))
 		 ((and (char? x) (char? y)) (= (char->integer x) (char->integer y)))
 		 ((and (pair? x) (pair? y))
-		  (equal?-loop (car x) (car y)) (equal?-loop (cdr x) (cdr y)))
+		  (and (equal?-loop (car x) (car y)) (equal?-loop (cdr x) (cdr y))))
 		 ((and (string? x) (string? y)) (equal?-loop (string->list x) (string->list y)))
 		 (else (eq? x y))))))
     equal?-loop)))
