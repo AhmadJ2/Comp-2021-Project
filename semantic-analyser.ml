@@ -59,6 +59,8 @@ module type SEMANTICS = sig
   val annotate_tail_calls : expr' -> expr'
   val box_set : expr' -> expr'
   val bx : string -> expr' list
+  val lx: string -> expr' list
+  val tl : string -> expr' list
   val check_lower_levels : string -> int -> expr' -> int * int
   val check_seq : string -> int -> expr' list -> int
   val levels: string -> int -> expr' -> int
