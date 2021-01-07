@@ -118,6 +118,8 @@ let rec tails b e =
       | LambdaSimple'(vars, body) -> LambdaSimple'(vars, tails 1 body)
       | LambdaOpt'(vars,s, body) -> LambdaOpt'(vars, s, tails 1 body)
       | Or'(lst) -> Or'(deal_with_seq b lst [])
+      | Def'(v, exp) -> Def'(v, tails 0 exp)
+      | Set'(v, exp) -> Set'(v, tails 0 exp)
       | _ -> e
 
 
@@ -180,7 +182,7 @@ and levels var f seq = match seq with
       | _ -> 0
 
 and check_lower_levels var f exp = match exp with 
-      | Var'(VarParam(v, _)) -> (f,0)
+      | Var'(VarParam(v, _)) -> if v=var then (f,0) else (0,0)
       (* | BoxGet'(Var'(VarBound(_ ,_ , _)))-> (1, 0) *)
       | Set'(VarParam(v, _), exp) -> if v=var then (let (read, write) = check_lower_levels var f exp in (read, 1)) else check_lower_levels var f exp
       | Var'(VarBound(v, _, _)) -> if v=var then (1, 0) else (0,0)
@@ -245,16 +247,5 @@ let run_semantics expr =
 
 end;;
 
+ (* (lambda () (set! (f (lambda (y) (g x a))))) *)
 
-LambdaSimple' (["c"; "b"],
-
- Seq'
-   [Set' (VarParam ("c", 0),
-      LambdaSimple' (["x"],
-            If' (Var' (VarParam ("x", 0)), Var' (VarParam ("x", 0)),
-                  Applic' (Var' (VarBound ("b", 0, 1)), [Const' (Sexpr (Bool true))]))));
-
-   Set' (VarParam ("b", 1), LambdaSimple' (["x"], Var' (VarParam ("x", 0))));
-
-   Applic' (Var' (VarParam ("c", 0)), [Const' (Sexpr (Bool false))]);
-   ])
