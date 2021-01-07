@@ -1,4 +1,1 @@
-(fold-left (lambda (x y) (+ x y)) 0 '(1 2))
-;(+ 1 3)
-
-
+(equal? '(1) '(2))

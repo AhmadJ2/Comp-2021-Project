@@ -34,7 +34,7 @@ let make_prologue consts_tbl fvars_tbl =
     (* Identity test *)
     "eq?", "eq?";
     (* Arithmetic ops *)
-    "+", "add"; "*", "mul"; "/", "div"; "=", "eq"; "<", "lt"; ">","gr";
+    "+", "add"; "*", "mul"; "/", "div"; "=", "eq"; "<", "lt";
     (* Additional rational numebr ops *)
     "numerator", "numerator"; "denominator", "denominator"; "gcd", "gcd";
     (* you can add yours here *)

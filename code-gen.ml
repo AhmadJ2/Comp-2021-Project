@@ -50,26 +50,22 @@ let find_off lst =
   
 let tailed_call c = 
 Printf.sprintf "
-  push rax
-	push rbx
-	push rcx
-	push rdx
-	mov rax, rdx
-	call write_sob_if_not_void ;; this should print closure
-	pop rdx
-	pop rcx
-	pop rbx
-	pop rax
-
     mov rbx, [rbp +8*1] ; old ret
     cmp rbx, T_UNDEFINED
     je tail_lab%d
+    mov rsi, [rbp]
     push rbx ; push old return address
-    mov rax, [rbp]
-    sub rax, 8
-    mov rbx, rbp
-    sub rbx, 8
-    
+    mov rax, rsp
+    mov rbx, rsp
+    mov rcx, [rsp + 8 * 2]
+    add rcx, 2
+    shl rcx, 3
+    add rbx, rcx
+    shr rcx, 3
+    add rcx, [rsp + 8*(4 + rcx)]
+    add rcx, 4
+    shl rcx, 3
+    add rax, rcx
 tail_the_stack%d:
     mov rcx, [rbx]
     mov [rax], rcx
@@ -80,23 +76,12 @@ tail_the_stack%d:
     jmp tail_the_stack%d
        
 end_tail_loop%d:
-    mov rbp, [rbp]
+    mov rbp, rsi
     add rax, 8
     mov rsp, rax
-
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    call write_sob_if_not_void ;; this should print closure
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
     
     jmp rdx
 tail_lab%d: ; in case this was the outer call
-
     call rdx
     add rsp, 8*1
     pop rbx
@@ -165,7 +150,11 @@ mov rcx, [rsp + 8*(3+rbx)]
 MAKE_PAIR(rax, rcx, SOB_NIL_ADDRESS)
 mov [rsp + 8*(3+rbx)], rax
 e%dnd_opt_:" n c n c c n c c c c n c c n c c c c c c c c c 
-  
+let string_of_float_ flt =
+    let str = string_of_float flt in
+      let ch = String.get str ((String.length str) -1)  in
+        if (ch = '.') then (str^"0") else str
+        
 let rec mct acc exp = 
     match exp with 
     | Const'(Void) -> if (false = List.exists (fun (con, (inte, str)) -> str = "db T_VOID") acc) then (acc@[(Void,((find_off acc), "db T_VOID"))]) else (acc)
@@ -175,7 +164,7 @@ let rec mct acc exp =
         | Bool(bo) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Bool(bo)))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_SINGLE_LIT T_BOOL ,"^(if (bo) then ("1") else ("0"))))]) else (acc)
         | Char(ch) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Char(ch)))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_SINGLE_LIT T_CHAR ,"^string_of_int (int_of_char ch)))]) else (acc)
         | Number(Fraction(num, den)) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Number(Fraction(num, den))))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_RATIONAL("^(string_of_int num)^", "^ (string_of_int den)^")"))]) else (acc)
-        | Number(Float(flo)) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Number(Float(flo))))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_FLOAT "^(string_of_float flo)^" "))]) else (acc)
+        | Number(Float(flo)) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Number(Float(flo))))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_FLOAT "^(string_of_float_ flo)^" "))]) else (acc)
         | Nil -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Nil))) acc) then (acc@[(Sexpr(e),((find_off acc), "db T_NIL"))]) else (acc)
         | Pair(car, cdr) -> let dis = (mct (mct acc (Const'(Sexpr(car)))) (Const'(Sexpr(cdr)))) in 
           (if (false = (List.exists (fun (con, (inte, str)) -> (con = (Sexpr(Pair(car, cdr))))) (dis))) then 
@@ -274,6 +263,7 @@ let rec gener consts fvars env e =
     | Def'(VarFree(v), e) -> (Printf.sprintf ";definee\n\n\t%s\n\t;move val to var in definee\n\tmov qword[fvar_tbl + 8 * %d], rax\n\tmov rax, SOB_VOID_ADDRESS" (gener consts fvars env e)) (List.assoc v fvars)
     | LambdaSimple'(params, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda simple\n\t%s\n%s" (lambdaenv c (env + 1)) (lambdaBody consts fvars body c (env + 1)))
     | LambdaOpt'(slst ,s, body) -> let c = !counter in let _ = (counter:=!counter+1) in (Printf.sprintf ";lambda opt\n%s\n\n\n\n\n\n%s" (lambdaenv c (env + 1)) (lambdaBodyopt  consts fvars body c (env + 1) (1+ (List.length slst))))
+    (* | ApplicTP' (proc, vars) -> gener consts fvars env (Applic'(proc, vars)) *)
     | ApplicTP'(proc, vars) -> 
     let c = !counter in let _ = (counter:=!counter+1) in
       let proc = (gener consts fvars env proc) in let n = 

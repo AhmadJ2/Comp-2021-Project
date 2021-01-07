@@ -18,7 +18,35 @@
 %define GB(n) 1024*MB(n)
 ; %1 is where to place the char
 ; %2 what char to place
-
+%macro pushad 0
+	push rax
+	push rbx
+	push rcx
+	push rdx
+	push rsi
+	push rdi
+%endmacro
+%macro debug 1
+	pushad
+	mov rbx, %1
+	MAKE_RATIONAL(rax, rbx, 1)
+	call write_sob_if_not_void
+	popad
+%endmacro
+%macro debugs 1
+	pushad
+	mov rax, %1
+	call write_sob_if_not_void
+	popad
+%endmacro
+%macro popad 0
+	pop rdi
+	pop rsi
+	pop rdx
+	pop rcx
+	pop rbx
+	pop rax
+%endmacro
 %macro PAIR_LENGTH 0
        mov rdx, 0
        %%leap:
