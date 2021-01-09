@@ -348,8 +348,21 @@ module Prims : PRIMS = struct
 
         (* GCD *)
         "xor rdx, rdx
-	 NUMERATOR rax, rsi
+	       NUMERATOR rax, rsi
          NUMERATOR rdi, rdi
+         cmp rax, 0
+         jl .rax_abs
+         jmp .done_rax_abs
+         .rax_abs:
+         neg rax
+         .done_rax_abs:
+         cmp rdi, 0
+         jl .rdi_abs
+         jmp .done_abs
+         .rdi_abs:
+          neg rdi
+         .done_abs:
+
        .loop:
 	 and rdi, rdi
 	 jz .end_loop

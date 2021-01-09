@@ -18,7 +18,6 @@
     (lambda (f . args)
       (map-many f args)))))
 
-
 (define (fold-left f init seq) 
    (if (null? seq) 
        init 
@@ -81,7 +80,7 @@
 (let ((flonum? flonum?) (rational? rational?)
       (exact->inexact exact->inexact)
       (fold-left fold-left) (map map)
-      (_+ +) (_* *) (_/ /) (_= =) (_< <)
+      (_+ +) (_* *) (_/ /) (_= =) (_< <) (gcd gcd)
       (car car) (cdr cdr) (null? null?))
   (let ((^numeric-op-dispatcher
 	 (lambda (op)
