@@ -166,27 +166,42 @@ module Prims : PRIMS = struct
 	pop rcx
 	pop rsi
 	mov rbx, rax
-    NUMERATOR rsi, rsi
+  NUMERATOR rsi, rsi
 	NUMERATOR rcx, rcx
-    NUMERATOR rax, rax
-		;debug rax
-		;debug rsi
+  NUMERATOR rax, rax
 		xor rdx, rdx
 		push rax
 		mov rax, rsi
-		pop rsi
+    pop rsi
+    cmp rax, 0
+    jge .rax_1_con
+		neg rax
     div rsi
-    ;debug rax
-    ;debug rsi
+    neg rax
+    jmp .rax_1_end
+    .rax_1_con:
+    div rsi
+    .rax_1_end:
 		push rax
 		mov rax, rcx
 		xor rdx, rdx
-    div rsi 
-    ;debug rax
-    ;debug rsi
-    ;debug rcx
+    cmp rax, 0
+    jge .rax_2_con
+    neg rax
+    div rsi
+    neg rax
+    jmp .rax_2_end
+    .rax_2_con:
+    div rsi
+    .rax_2_end: 
 		pop rsi
-		mov rcx, rax", 
+		mov rcx, rax
+    cmp rcx,0
+    jge .rcx_1_con
+    neg rcx
+    neg rsi
+    .rcx_1_con:
+    ", 
         "mulsd",
           "mul";
         
