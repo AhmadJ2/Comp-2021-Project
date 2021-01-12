@@ -179,3 +179,7 @@
 (check-equal? (collect-all-values-2 (list l1 l2) 'e) '(2 5) "incorrect collect-all-values-2 1")
 (check-equal? (collect-all-values-2 (list l1 l2) 'k) '() "incorrect collect-all-values-2 2")
 1
+(if (zero? 0) (or #f #t) 0)
+(define x (lambda (lst) (set-car! lst 0) lst))
+(x '(9 9))
+'(9 9)

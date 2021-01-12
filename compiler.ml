@@ -38,7 +38,7 @@ let make_prologue consts_tbl fvars_tbl =
     (* Additional rational numebr ops *)
     "numerator", "numerator"; "denominator", "denominator"; "gcd", "gcd";
     (* you can add yours here *)
-    "car", "car"; "cdr", "cdr"; "cons", "cons"; "apply", "apply";
+    "car", "car"; "cdr", "cdr"; "cons", "cons"; "apply", "apply"; "set-car!", "set_car";"set-cdr!", "set_cdr";
   ] in
   (* let tmp = [] in *)
   let make_primitive_closure (prim, label) =
