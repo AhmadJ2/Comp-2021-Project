@@ -1,0 +1,41 @@
+(eq? ((lambda (x . y)
+	(cons x y)) 'a 'b 'c 'd)
+	'(a b c d))
+((lambda x
+     (map cdr x))
+   '(97 #\a) (list 0 #\nul) `(32.0 #\space) (cons 10 #\newline))
+(define a 'alpha)
+(define b 'beta)
+
+(define l ((lambda (x y)
+               (list 
+                 (lambda () (set! x y))
+                 (lambda () (cons x y)))) a b))
+((car (cdr l)))
+((car l))
+((car (cdr l)))
+(apply - 0 `(3 ,@(append '(4 4) '(4))))
+
+
+(define rocket (char->integer #\r))
+(define frily (char->integer #\f))
+
+(not (> frily rocket))
+
+(let ((baf (lambda (f)
+               (lambda (n)
+                 (if (> n 0)
+                     `(* ,n ,((f f) (- n 1)))
+                     "end")))))
+    ((baf baf) 3))
+(define foo (lambda (x)
+				(cons
+					(begin (lambda () (set! x 1) 'void))
+					(lambda () x))))
+(define p (foo 2))
+
+(let* ((a ((cdr p)))
+      (b ((car p)))
+      (c ((cdr p))))
+    (cons a (cons b (cons c '()))))
+		

@@ -1,6 +1,3 @@
-(< 1.0 2.0)
-(< 2.0 1.0)
-
 (define map
   (let ((null? null?)
 	(car car) (cdr cdr)
@@ -45,7 +42,6 @@
 	)
 )
 
-
 (define append
   (let ((null? null?)
 	(fold-right fold-right)
@@ -68,7 +64,7 @@
 	      (lambda (x)
 		(or (null? x)
 		    (and (pair? x)
-			 (list? (cdr x)))))))
+			 (list?-loop (cdr x)))))))
       list?-loop)))
 
 (define make-string
@@ -78,14 +74,12 @@
       (if (null? y)
 	  (make-string x #\nul)
 	  (make-string x (car y))))))
-;(/ ( / (numerator 10/6) 2) (/ (denominator 10/6) 2))
 
-(< 2.0 1.0)
-(< 1.0 2.0)
 (define not
   (lambda (x) (if x #f #t)))
+
 (let ((flonum? flonum?) (rational? rational?)
-      (exact->inexact exact->inexact) 
+      (exact->inexact exact->inexact)
       (fold-left fold-left) (map map)
       (_+ +) (_* *) (_/ /) (_= =) (_< <)
       (car car) (cdr cdr) (null? null?))
@@ -96,19 +90,13 @@
 	      ((and (flonum? x) (rational? y)) (op x (exact->inexact y)))
 	      ((and (rational? x) (flonum? y)) (op (exact->inexact x) y))
 	      (else (op x y)))))))
-    (let ((normalize
-	   (lambda (x)
-	     (if (flonum? x)
-		 x
-		 (let ((n (gcd (numerator x) (denominator x))))
-		   (_/ (_/ (numerator x) n) (_/ (denominator x) n)))))))
-      (set! + (lambda x (normalize (fold-left (^numeric-op-dispatcher _+) 0 x))))
-      (set! * (lambda x (normalize (fold-left (^numeric-op-dispatcher _*) 1 x))))
-      (set! / (let ((/ (^numeric-op-dispatcher /)))
+      (set! + (lambda x (fold-left (^numeric-op-dispatcher _+) 0 x)))
+      (set! * (lambda x (fold-left (^numeric-op-dispatcher _*) 1 x)))
+      (set! / (let ((/ (^numeric-op-dispatcher _/)))
 		(lambda (x . y)
 		  (if (null? y)
 		      (/ 1 x)
-		      (normalize (fold-left / x y)))))))
+		      (fold-left / x y)))))
     (let ((^comparator
 	  (lambda (op)
 	    (lambda (x . ys)
@@ -116,7 +104,6 @@
 			 (map (lambda (y) (op x y)) ys))))))
       (set! = (^comparator (^numeric-op-dispatcher _=)))
       (set! < (^comparator (^numeric-op-dispatcher _<))))))
-
 
 (define -
   (let ((apply apply)
@@ -129,11 +116,15 @@
 
 (define >
   (let ((null? null?) (not not)
-	(< <) (= =) (fold-left fold-left))
-    (lambda (x . ys)
-      (fold-left (lambda (a y)
-		   (and a (not (or (< x y) (= x y)))))
-		 #t ys))))
+        (car car) (cdr cdr)
+        (< <) (= =))
+    (letrec ((>-loop
+	      (lambda (x ys)
+	        (or (null? ys)
+		    (and (not (< x (car ys))) (not (= x (car ys)))
+		         (>-loop (car ys) (cdr ys)))))))
+      (lambda (x . y)
+        (>-loop x y)))))
 
 (define gcd
   (let ((gcd gcd) (null? null?)
@@ -198,12 +189,7 @@
 		 ((and (flonum? x) (flonum? y)) (= x y))
 		 ((and (char? x) (char? y)) (= (char->integer x) (char->integer y)))
 		 ((and (pair? x) (pair? y))
-		  (equal?-loop (car x) (car y)) (equal?-loop (cdr x) (cdr y)))
+		  (and (equal?-loop (car x) (car y)) (equal?-loop (cdr x) (cdr y))))
 		 ((and (string? x) (string? y)) (equal?-loop (string->list x) (string->list y)))
 		 (else (eq? x y))))))
     equal?-loop)))
-
-(< 2.0 1)
-(< 1 2.0)
-
-

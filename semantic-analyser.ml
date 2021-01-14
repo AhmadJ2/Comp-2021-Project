@@ -59,6 +59,8 @@ module type SEMANTICS = sig
   val annotate_tail_calls : expr' -> expr'
   val box_set : expr' -> expr'
   val bx : string -> expr' list
+  val lx: string -> expr' list
+  val tl : string -> expr' list
   val check_lower_levels : string -> int -> expr' -> int * int
   val check_seq : string -> int -> expr' list -> int
   val levels: string -> int -> expr' -> int
@@ -110,43 +112,25 @@ let annotate_lexical_addresses e = lex [] e ;;
 let lx e = List.map annotate_lexical_addresses (tags e);;
 
 let rec tails b e = 
-        if b != 0 then check_if_lambda e 
-        else
 
         match e with
-      | If'(test, thn, alt) -> If'(test, check_if_app b thn, check_if_app b alt)
-      | Seq'(lst) -> (if (List.length lst) = 1 then check_if_app b (List.nth lst 0) 
-                        else let(lst, last) = pari_last lst [] in 
-                            Seq'(lst@[check_if_app b last]))
-      | Applic'(e, exps) ->  Applic'(e, List.map (tails 1) exps)
-      | LambdaSimple'(vars, body) -> LambdaSimple'(vars, check_if_app 0 body)
-      | LambdaOpt'(vars,s, body) -> LambdaOpt'(vars, s, check_if_app 0 body)
-      | Or'(lst) -> let(lst, last) = pari_last lst [] in Or'(lst@[check_if_app b last])
+      | If'(test, thn, alt) -> If'(test, tails b thn, tails b alt)
+      | Seq'(lst) -> Seq'(deal_with_seq b lst [])
+      | Applic'(e, exps) ->  if (b = 1) then (ApplicTP'(tails 0 e , List.map (tails 0) exps)) else (Applic'(tails 0 e , List.map (tails 0) exps))
+      | LambdaSimple'(vars, body) -> LambdaSimple'(vars, tails 1 body)
+      | LambdaOpt'(vars,s, body) -> LambdaOpt'(vars, s, tails 1 body)
+      | Or'(lst) -> Or'(deal_with_seq b lst [])
+      | Def'(v, exp) -> Def'(v, tails 0 exp)
+      | Set'(v, exp) -> Set'(v, tails 0 exp)
       | _ -> e
 
-and pari_last lst_exp lst = 
-            if (List.length lst_exp) = 1 then 
-                  (lst, List.nth lst_exp 0) 
-                else match lst_exp with
-                  | f::rest -> pari_last rest (lst@[check_if_lambda f])
-                  | _ -> raise X_invalid_expr
 
-and check_if_app b expr = match expr with
-      | Applic'(x, w) -> ApplicTP'(x, List.map (tails 1) w)
-      | _ -> tails b expr
-      
-and check_if_lambda expr = match expr with
-    | LambdaSimple'(e, body) -> LambdaSimple'(e, check_if_app 0 body)
-    | LambdaOpt'(e, s, body) -> LambdaOpt'(e, s, check_if_app 0 body)
-    | Applic'(e, exps) ->  Applic'(e, List.map (tails 1) exps)
-    | Seq'(exps) -> Seq'(List.map (tails 1) exps)
-    | _-> expr
-      ;;
-
-
-let annotate_tail_calls e = match e with
-      | Applic'(e, exps) -> ApplicTP'(e, List.map (tails 1) exps)
-      | _ -> tails 0 e;;
+and deal_with_seq b lst acc
+      = match lst with
+            | [] -> acc
+            | (car::[]) -> acc@[(tails b car)]
+            | car::cdr -> deal_with_seq b cdr (acc@[tails 0 car])
+let annotate_tail_calls e =  tails 0 e;;
 
 let tl e = List.map annotate_tail_calls (lx e);;
 
@@ -200,7 +184,7 @@ and levels var f seq = match seq with
       | _ -> 0
 
 and check_lower_levels var f exp = match exp with 
-      | Var'(VarParam(v, _)) -> (f,0)
+      | Var'(VarParam(v, _)) -> if v=var then (f,0) else (0,0)
       (* | BoxGet'(Var'(VarBound(_ ,_ , _)))-> (1, 0) *)
       | Set'(VarParam(v, _), exp) -> if v=var then (let (read, write) = check_lower_levels var f exp in (read, 1)) else check_lower_levels var f exp
       | Var'(VarBound(v, _, _)) -> if v=var then (1, 0) else (0,0)
@@ -265,16 +249,5 @@ let run_semantics expr =
 
 end;;
 
+ (* (lambda () (set! (f (lambda (y) (g x a))))) *)
 
-LambdaSimple' (["c"; "b"],
-
- Seq'
-   [Set' (VarParam ("c", 0),
-      LambdaSimple' (["x"],
-            If' (Var' (VarParam ("x", 0)), Var' (VarParam ("x", 0)),
-                  Applic' (Var' (VarBound ("b", 0, 1)), [Const' (Sexpr (Bool true))]))));
-
-   Set' (VarParam ("b", 1), LambdaSimple' (["x"], Var' (VarParam ("x", 0))));
-
-   Applic' (Var' (VarParam ("c", 0)), [Const' (Sexpr (Bool false))]);
-   ])

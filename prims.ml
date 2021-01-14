@@ -166,27 +166,42 @@ module Prims : PRIMS = struct
 	pop rcx
 	pop rsi
 	mov rbx, rax
-    NUMERATOR rsi, rsi
+  NUMERATOR rsi, rsi
 	NUMERATOR rcx, rcx
-    NUMERATOR rax, rax
-		;debug rax
-		;debug rsi
+  NUMERATOR rax, rax
 		xor rdx, rdx
 		push rax
 		mov rax, rsi
-		pop rsi
+    pop rsi
+    cmp rax, 0
+    jge .rax_1_con
+		neg rax
     div rsi
-    ;debug rax
-    ;debug rsi
+    neg rax
+    jmp .rax_1_end
+    .rax_1_con:
+    div rsi
+    .rax_1_end:
 		push rax
 		mov rax, rcx
 		xor rdx, rdx
-    div rsi 
-    ;debug rax
-    ;debug rsi
-    ;debug rcx
+    cmp rax, 0
+    jge .rax_2_con
+    neg rax
+    div rsi
+    neg rax
+    jmp .rax_2_end
+    .rax_2_con:
+    div rsi
+    .rax_2_end: 
 		pop rsi
-		mov rcx, rax", 
+		mov rcx, rax
+    cmp rcx,0
+    jge .rcx_1_con
+    neg rcx
+    neg rsi
+    .rcx_1_con:
+    ", 
         "mulsd",
           "mul";
         
@@ -211,11 +226,11 @@ module Prims : PRIMS = struct
     let arith name flt_op rat_op =
       numeric_op name
         ("FLOAT_VAL rsi, rsi 
-          movq xmm0, rsi
+          movq xmm1, rsi
           FLOAT_VAL rdi, rdi 
-          movq xmm1, rdi
-	  " ^ flt_op ^ " xmm0, xmm1
-          movq rsi, xmm0
+          movq xmm2, rdi
+	  " ^ flt_op ^ " xmm1, xmm2
+          movq rsi, xmm1
           MAKE_FLOAT(rax, rsi)")
         ("DENOMINATOR rcx, rsi
 	  DENOMINATOR rdx, rdi
@@ -236,10 +251,11 @@ module Prims : PRIMS = struct
          .false:",
         "FLOAT_VAL rsi, rsi
 	 FLOAT_VAL rdi, rdi
-	 cmp rsi, rdi", "eq";
+   cmp rsi, rdi", "eq";
+   
 
         (* < *)
-        return_boolean "jl",
+      return_boolean "jl",
         "DENOMINATOR rcx, rsi
 	 DENOMINATOR rdx, rdi
 	 NUMERATOR rsi, rsi
@@ -251,21 +267,10 @@ module Prims : PRIMS = struct
 	 movq xmm0, rsi
 	 FLOAT_VAL rdi, rdi
 	 movq xmm1, rdi
-	 ucomisd xmm0, xmm1", "lt";
-   (* > *)
-   return_boolean "jg",
-        "DENOMINATOR rcx, rsi
-	 DENOMINATOR rdx, rdi
-	 NUMERATOR rsi, rsi
-	 NUMERATOR rdi, rdi
-	 imul rsi, rdx
-	 imul rdi, rcx
-	 cmp rsi, rdi",
-        "FLOAT_VAL rsi, rsi
-	 movq xmm0, rsi
-	 FLOAT_VAL rdi, rdi
-	 movq xmm1, rdi
-	 ucomisd xmm0, xmm1", "gr";
+	 cmpltpd xmm0, xmm1
+	 movq rsi, xmm0
+	 cmp rsi, 0", "lt";
+
       ] in
     let comparator comp_wrapper name flt_body rat_body = numeric_op name flt_body rat_body comp_wrapper in
     (String.concat "\n\n" (List.map (fun (a, b, c) -> arith c b a (fun x -> x)) arith_map)) ^
@@ -342,10 +347,10 @@ module Prims : PRIMS = struct
 
         "DENOMINATOR rdi, rsi
 	 NUMERATOR rsi, rsi 
-	 cvtsi2sd xmm0, rsi
-	 cvtsi2sd xmm1, rdi
-	 divsd xmm0, xmm1
-	 movq rsi, xmm0
+	 cvtsi2sd xmm1, rsi
+	 cvtsi2sd xmm2, rdi
+	 divsd xmm1, xmm2
+	 movq rsi, xmm1
 	 MAKE_FLOAT(rax, rsi)", make_unary, "exact_to_inexact";
 
         "NUMERATOR rsi, rsi
@@ -358,8 +363,21 @@ module Prims : PRIMS = struct
 
         (* GCD *)
         "xor rdx, rdx
-	 NUMERATOR rax, rsi
+	       NUMERATOR rax, rsi
          NUMERATOR rdi, rdi
+         cmp rax, 0
+         jl .rax_abs
+         jmp .done_rax_abs
+         .rax_abs:
+         neg rax
+         .done_rax_abs:
+         cmp rdi, 0
+         jl .rdi_abs
+         jmp .done_abs
+         .rdi_abs:
+          neg rdi
+         .done_abs:
+
        .loop:
 	 and rdi, rdi
 	 jz .end_loop
@@ -463,7 +481,8 @@ module Prims : PRIMS = struct
 
          "mov [rsi+9], rdi
          mov rax, SOB_VOID_ADDRESS
-         ", make_binary , "set_cdr"; 
+         ", make_binary , "set_cdr";
+         
       ] in
     String.concat "\n\n" (List.map (fun (a, b, c) -> (b c a)) misc_parts);;
 
