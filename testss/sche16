@@ -1,5 +1,6 @@
 Chez Scheme Version 9.5
 Copyright 1984-2017 Cisco Systems, Inc.
 
-> (* 3 (* 2 (* 1 "end")))
+> > > 5
+> > (1 2 3)
 > 

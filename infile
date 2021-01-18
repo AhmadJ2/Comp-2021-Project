@@ -1,1 +1,2 @@
-(eq? 'g (car (cdr (cdr '#{moshe}=(a b  g (h) ((i)) (((#{moshe}))))))))
+#; #; 1 2 3
+;1

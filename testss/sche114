@@ -1,0 +1,7 @@
+Chez Scheme Version 9.5
+Copyright 1984-2017 Cisco Systems, Inc.
+
+> (1 -2 3 -4.2 5 -6)
+> > (1 2 3 4.2 5 6)
+> (8 14 18 20)
+> 
