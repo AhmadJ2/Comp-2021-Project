@@ -1,6 +1,0 @@
-Chez Scheme Version 9.5
-Copyright 1984-2017 Cisco Systems, Inc.
-
-> > > > > (3628800 fact-1 fact-2 fact-3 fact-1 fact-2 fact-3 fact-1
-  fact-2 fact-3 fact-1 fact-2)
-> 
