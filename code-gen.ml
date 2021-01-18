@@ -154,13 +154,16 @@ let string_of_float_ flt =
     let str = string_of_float flt in
       let ch = String.get str ((String.length str) -1)  in
         if (ch = '.') then (str^"0") else str
-        
+
+let rec modify_string str = let a = String.split_on_char '\"' str in String.concat "\", 0x22, \"" a;;
+
+
 let rec mct acc exp = 
     match exp with 
     | Const'(Void) -> if (false = List.exists (fun (con, (inte, str)) -> str = "db T_VOID") acc) then (acc@[(Void,((find_off acc), "db T_VOID"))]) else (acc)
     | Const'(Sexpr(e))->
         (match e with
-        | String(name)-> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(String(name)))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_STRING \""^name^"\", " ^string_of_int (String.length name)))]) else (acc)
+        | String(name)-> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(String(name)))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_STRING { \""^(modify_string(name))^"\" }, " ^string_of_int (String.length name)))]) else (acc)
         | Bool(bo) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Bool(bo)))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_SINGLE_LIT T_BOOL ,"^(if (bo) then ("1") else ("0"))))]) else (acc)
         | Char(ch) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Char(ch)))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_SINGLE_LIT T_CHAR ,"^string_of_int (int_of_char ch)))]) else (acc)
         | Number(Fraction(num, den)) -> if (false = List.exists (fun (con, (inte, str)) -> con = (Sexpr(Number(Fraction(num, den))))) acc) then (acc@[(Sexpr(e),((find_off acc), "MAKE_LITERAL_RATIONAL("^(string_of_int num)^", "^ (string_of_int den)^")"))]) else (acc)
@@ -239,8 +242,8 @@ let rec gener consts fvars env e =
     | Const'(c) -> wrap_const c consts
     | If'(tst, thn, els) -> 
       ( let c = !counter in let _ = (counter:=!counter+1) in
-      (Printf.sprintf "\n\t%s\n\tcmp byte[rax+1], 1\n\tje true%d\n\t%s\n\tjmp continue%d\n\ttrue%d:\n\t%s\n\tcontinue%d:"
-        (gener consts fvars env tst) c  (gener consts fvars env els) c c (gener consts fvars env thn) c))
+      (Printf.sprintf "\n\t%s\n\tcmp byte[rax], T_BOOL\n\tjne true%d\n\tcmp byte[rax+1], 1\n\tje true%d\n\t%s\n\tjmp continue%d\n\ttrue%d:\n\t%s\n\tcontinue%d:"
+        (gener consts fvars env tst) c c  (gener consts fvars env els) c c (gener consts fvars env thn) c))
     | Var'(VarParam(s, minor)) -> (Printf.sprintf ";varparam %s\n\tmov rax, qword[rbp + 8 * (4 + %d)]" s minor) 
     | Set'(VarParam(s, minor), ex) -> (Printf.sprintf ";set varparam %s\n\t%s\n\tmov qword[rbp + 8  * ( 4 + %d)], rax\n\tmov rax, SOB_VOID_ADDRESS" s (gener consts fvars env ex) minor)
     | Var'(VarBound(s,major, minor)) -> (Printf.sprintf ";varbound %s\n\tmov rax, qword[rbp + 8 * 2]\n\tmov rax, qword[rax + 8 * %d]\n\tmov rax, qword[rax + 8 * %d]" s major minor) 

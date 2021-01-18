@@ -4,10 +4,10 @@ os.system('rm -rf testss')
 os.system('mkdir testss')
 nops = 'PC.X'
 def runs():
-    for i in range(1,53):
-        cmd = "cat cases/{}.scm > infile; make ttt>check; ./test/test > testss/anss{}".format(i, i)
+    for i in range(1, 169):
+        cmd = "cat cases/test{}.scm > infile; make ttt>check; ./test/test > testss/anss{}".format(i, i)
         subprocess.check_output(cmd, shell=True)
-        cmd = 'scheme < cases/{}.scm >testss/sche{}'.format(i, i)
+        cmd = 'scheme < cases/test{}.scm >testss/sche{}'.format(i, i)
         subprocess.check_output(cmd, shell=True)
         with open('test/test.s', 'r') as check:
             if  len(check.readlines())==0:
